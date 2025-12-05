@@ -1,0 +1,19 @@
+[package]
+name = "cairo-plonk-dsl-fiat-shamir"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+stwo.workspace = true
+stwo-examples.workspace = true
+cairo-plonk-dsl-hints = { path = "../../hints" }
+circle-plonk-dsl-fields = { path = "../../../primitives/fields" }
+circle-plonk-dsl-constraint-system = { path = "../../../constraint_system" }
+circle-plonk-dsl-channel = { path = "../../../primitives/channel" }
+circle-plonk-dsl-circle = { path = "../../../primitives/circle" }
+circle-plonk-dsl-bits = { path = "../../../primitives/bits" }
+circle-plonk-dsl-poseidon31 = { path = "../../../primitives/poseidon31" }
+cairo-plonk-dsl-data-structures = { path = "../data_structures" }
+bincode.workspace = true
+num-traits.workspace = true
+cairo-air.workspace = true

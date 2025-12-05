@@ -1,9 +1,9 @@
 use crate::ConstraintSystemRef;
 
-pub trait Var: Clone {
+pub trait Var: Sized {
     /// The type of the "native" value that `Self` represents in the constraint
     /// system.
-    type Value: Clone;
+    type Value;
 
     /// Returns the underlying `ConstraintSystemRef`.
     fn cs(&self) -> ConstraintSystemRef;
