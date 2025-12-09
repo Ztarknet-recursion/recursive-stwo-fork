@@ -351,15 +351,20 @@ impl CairoFiatShamirHints {
         // Draw OODS point.
         let oods_point = CirclePoint::<SecureField>::get_random_point(channel);
 
-        println!("channel after drawing OODS point: {:?}", channel.digest());
-        println!("oods point: {:?}", oods_point);
-
         // Get mask sample points relative to oods point.
         let mut sample_points = components.mask_points(oods_point);
         // Add the composition polynomial mask points.
         sample_points.push(vec![vec![oods_point]; 2 * SECURE_EXTENSION_DEGREE]);
 
         let _sample_points_by_column = sample_points.as_cols_ref().flatten();
+
+        channel.mix_felts(&proof.stark_proof.sampled_values.clone().flatten_cols());
+        let _after_sampled_values_random_coeff = channel.draw_secure_felt();
+
+        println!(
+            "channel after drawing another random coeff: {:?}",
+            channel.digest()
+        );
 
         Self {
             initial_channel,

@@ -29,4 +29,3 @@ pub use line::LinePolyVar;
 pub use merkle::Poseidon31MerkleHasherVar;
 pub use poseidon31::Poseidon2HalfVar;
 pub use query::{PointCarryingQueryVar, QueryPositionsPerLogSizeVar};
-

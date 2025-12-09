@@ -1,8 +1,8 @@
 use circle_plonk_dsl_answer::AnswerResults;
 use circle_plonk_dsl_data_structures::{PlonkWithPoseidonProofVar, SinglePairMerkleProofVar};
 use circle_plonk_dsl_fiat_shamir::FiatShamirResults;
-use circle_plonk_dsl_primitives::QM31Var;
 use circle_plonk_dsl_hints::{FiatShamirHints, FirstLayerHints, InnerLayersHints};
+use circle_plonk_dsl_primitives::QM31Var;
 use std::collections::{BTreeMap, HashMap};
 use stwo::core::vcs::poseidon31_merkle::Poseidon31MerkleChannel;
 
@@ -69,12 +69,8 @@ impl FoldingResults {
 
                 let bit_value = query.bits.0[0].0.value.0 != 0;
                 let bit_variable = query.bits.0[0].0.variable;
-                let (left_val, right_val) = QM31Var::swap(
-                    &self_val,
-                    &sibling_val,
-                    bit_value,
-                    bit_variable,
-                );
+                let (left_val, right_val) =
+                    QM31Var::swap(&self_val, &sibling_val, bit_value, bit_variable);
 
                 let new_left_val = &left_val + &right_val;
                 let new_right_val = &(&left_val - &right_val) * &y_inv;
@@ -172,12 +168,8 @@ impl FoldingResults {
 
                 let bit_value = query.bits.0[0].0.value.0 != 0;
                 let bit_variable = query.bits.0[0].0.variable;
-                let (left_val, right_val) = QM31Var::swap(
-                    &self_val,
-                    &sibling_val,
-                    bit_value,
-                    bit_variable,
-                );
+                let (left_val, right_val) =
+                    QM31Var::swap(&self_val, &sibling_val, bit_value, bit_variable);
 
                 let new_left_val = &left_val + &right_val;
                 let new_right_val = &(&left_val - &right_val) * &x_inv;
@@ -212,15 +204,15 @@ impl FoldingResults {
 mod test {
     use crate::FoldingResults;
     use circle_plonk_dsl_answer::AnswerResults;
-    use circle_plonk_dsl_primitives::CirclePointQM31Var;
     use circle_plonk_dsl_constraint_system::var::AllocVar;
     use circle_plonk_dsl_constraint_system::ConstraintSystemRef;
     use circle_plonk_dsl_data_structures::PlonkWithPoseidonProofVar;
     use circle_plonk_dsl_fiat_shamir::FiatShamirResults;
-    use circle_plonk_dsl_primitives::QM31Var;
     use circle_plonk_dsl_hints::{
         AnswerHints, DecommitHints, FiatShamirHints, FirstLayerHints, InnerLayersHints,
     };
+    use circle_plonk_dsl_primitives::CirclePointQM31Var;
+    use circle_plonk_dsl_primitives::QM31Var;
     use num_traits::One;
     use stwo::core::fields::qm31::QM31;
     use stwo::core::fri::FriConfig;

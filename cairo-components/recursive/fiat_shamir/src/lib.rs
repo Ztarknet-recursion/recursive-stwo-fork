@@ -2,12 +2,15 @@ use std::collections::HashMap;
 
 use cairo_air::verifier::INTERACTION_POW_BITS;
 use cairo_plonk_dsl_data_structures::{
-    fiat_shamir::ChannelU64Var, lookup::CairoInteractionElementsVar, CairoClaimVar, CairoProofVar,
+    lookup::CairoInteractionElementsVar, BitIntVar, CairoClaimVar, CairoProofVar,
 };
 use cairo_plonk_dsl_hints::CairoFiatShamirHints;
-use circle_plonk_dsl_primitives::{BitVar, BitsVar, ChannelVar, CirclePointQM31Var, M31Var, Poseidon2HalfVar};
 use circle_plonk_dsl_constraint_system::var::{AllocVar, Var};
+use circle_plonk_dsl_primitives::{
+    BitVar, BitsVar, ChannelVar, CirclePointQM31Var, M31Var, Poseidon2HalfVar,
+};
 use stwo::core::fields::m31::M31;
+use stwo_cairo_common::memory::LARGE_MEMORY_VALUE_ID_BASE;
 
 pub struct CairoFiatShamirResults {}
 
@@ -22,10 +25,6 @@ impl CairoFiatShamirResults {
         proof.claim.mix_into(&mut channel);
 
         channel.mix_root(&proof.stark_proof.trace_commitment);
-
-        let _ = BitsVar::from_m31(&proof.interaction_pow.0[0], 22);
-        let _ = BitsVar::from_m31(&proof.interaction_pow.0[1], 21);
-        let _ = BitsVar::from_m31(&proof.interaction_pow.0[2], 21);
 
         proof.interaction_pow.mix_into(&mut channel);
 
@@ -42,11 +41,21 @@ impl CairoFiatShamirResults {
 
         // Draw OODS point.
         let _oods_point = CirclePointQM31Var::from_channel(&mut channel);
+
+        let sampled_values_flattened = proof.stark_proof.sampled_values.clone().flatten_cols();
+        for chunk in sampled_values_flattened.chunks(2) {
+            if chunk.len() == 1 {
+                channel.mix_one_felt(&chunk[0]);
+            } else {
+                channel.mix_two_felts(&chunk[0], &chunk[1]);
+            }
+        }
+        let _after_sampled_values_random_coeff = channel.draw_felts()[0].clone();
+
         println!(
-            "channel after drawing OODS point: {:?}",
+            "channel after drawing another random coeff: {:?}",
             channel.digest.value()
         );
-        println!("oods point: {:?}", _oods_point.value());
 
         println!(
             "size of constraint system so far: {:?} {:?}",
@@ -74,8 +83,8 @@ impl CairoFiatShamirResults {
 
         // check output builtin
         {
-            let start_ptr_bits = segment_ranges.output.start_ptr.value.get_31bits();
-            let stop_ptr_bits = segment_ranges.output.stop_ptr.value.get_31bits();
+            let start_ptr_bits = &segment_ranges.output.start_ptr.value.bits;
+            let stop_ptr_bits = &segment_ranges.output.stop_ptr.value.bits;
             start_ptr_bits
                 .is_greater_than(&stop_ptr_bits)
                 .equalverify(&BitVar::new_false(&start_ptr_bits.cs()));
@@ -88,14 +97,18 @@ impl CairoFiatShamirResults {
             let stop_ptr = &segment_ranges.range_check_128.stop_ptr.value;
             start_ptr.enforce_equal(segment_start);
 
-            let start_ptr_bits = start_ptr.get_31bits();
-            let stop_ptr_bits = stop_ptr.get_31bits();
+            let start_ptr_bits = &start_ptr.bits;
+            let stop_ptr_bits = &stop_ptr.bits;
             start_ptr_bits
                 .is_greater_than(&stop_ptr_bits)
                 .equalverify(&BitVar::new_false(&start_ptr_bits.cs()));
 
-            let log_size = &claim.builtins.range_check_128_builtin_log_size.0;
-            let segment_end = &segment_start.to_m31_unchecked() + &log_size.exp2();
+            let log_size = &claim
+                .builtins
+                .range_check_128_builtin_log_size
+                .bits
+                .compose();
+            let segment_end = &segment_start.to_m31() + &log_size.exp2();
             let segment_end_bits = BitsVar::from_m31(&segment_end, 31);
 
             stop_ptr_bits
@@ -111,9 +124,9 @@ impl CairoFiatShamirResults {
         let final_pc = &claim.public_data.final_state.pc;
         let final_ap = &claim.public_data.final_state.ap;
 
-        initial_pc.enforce_equal(&ChannelU64Var::new_constant(&initial_pc.cs(), &1u64));
+        initial_pc.enforce_equal(&BitIntVar::<31>::new_constant(&initial_pc.cs(), &1u64));
 
-        let initial_ap_bits = initial_ap.get_31bits();
+        let initial_ap_bits = &initial_ap.bits;
         // Initial pc + 2 must be less than initial ap, but got initial_pc
         initial_ap_bits
             .is_greater_than(&BitsVar::from_m31(
@@ -124,34 +137,24 @@ impl CairoFiatShamirResults {
         initial_fp.enforce_equal(final_fp);
         initial_fp.enforce_equal(initial_ap);
 
-        final_pc.enforce_equal(&ChannelU64Var::new_constant(&final_pc.cs(), &5u64));
+        final_pc.enforce_equal(&BitIntVar::<31>::new_constant(&final_pc.cs(), &5u64));
 
-        let final_ap_bits = final_ap.get_31bits();
+        let final_ap_bits = &final_ap.bits;
         initial_ap_bits
             .is_greater_than(&final_ap_bits)
             .equalverify(&BitVar::new_false(&initial_ap_bits.cs()));
 
-        let _relation_uses = HashMap::<&'static str, M31Var>::new();
-
-        /*
-        let mut relation_uses = HashMap::<&'static str, u64>::new();
+        // check that the relation uses do not overflow PRIME
+        let mut relation_uses: HashMap<&str, M31Var> = HashMap::<&'static str, M31Var>::new();
         claim.accumulate_relation_uses(&mut relation_uses);
-        relation_uses.iter().for_each(|(_, count)| {
-            assert!(*count < PRIME as u64);
-        });
-        // Large value IDs reside in [LARGE_MEMORY_VALUE_ID_BASE..P).
-        // Check that IDs in (ID -> Value) do not overflow P.
-        let largest_id = claim
-            .memory_id_to_value
-            .big_log_sizes
-            .iter()
-            .map(|log_size| 1 << log_size)
-            .sum::<u32>()
-            - 1
-            + LARGE_MEMORY_VALUE_ID_BASE;
-        assert!(largest_id < PRIME);
 
-        */
+        // check that the largest id does not overflow PRIME
+        let _ = (&claim.memory_id_to_value.big_log_size.to_m31().exp2()
+            - &M31Var::one(&claim.cs()))
+            .add_assert_no_overflow(&M31Var::new_constant(
+                &claim.cs(),
+                &M31::from(LARGE_MEMORY_VALUE_ID_BASE),
+            ));
     }
 
     /*pub fn lookup_sum(

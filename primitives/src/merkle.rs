@@ -1,7 +1,7 @@
 use crate::bits::BitVar;
-use circle_plonk_dsl_constraint_system::var::Var;
-use crate::{M31Var, QM31Var};
 use crate::poseidon31::Poseidon2HalfVar;
+use crate::{M31Var, QM31Var};
+use circle_plonk_dsl_constraint_system::var::Var;
 use std::cmp::min;
 
 pub struct Poseidon31MerkleHasherVar;
@@ -181,11 +181,11 @@ impl Poseidon31MerkleHasherVar {
 
 #[cfg(test)]
 mod test {
+    use crate::poseidon31::Poseidon2HalfVar;
+    use crate::M31Var;
     use crate::Poseidon31MerkleHasherVar;
     use circle_plonk_dsl_constraint_system::var::AllocVar;
     use circle_plonk_dsl_constraint_system::ConstraintSystemRef;
-    use crate::M31Var;
-    use crate::poseidon31::Poseidon2HalfVar;
     use num_traits::One;
     use rand::rngs::SmallRng;
     use rand::{Rng, SeedableRng};

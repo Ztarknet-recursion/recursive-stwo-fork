@@ -1,8 +1,8 @@
-use circle_plonk_dsl_primitives::{BitsVar, ChannelVar, HashVar, CirclePointQM31Var};
 use circle_plonk_dsl_constraint_system::var::{AllocVar, Var};
 use circle_plonk_dsl_data_structures::{LookupElementsVar, PlonkWithPoseidonProofVar};
-use circle_plonk_dsl_primitives::{M31Var, QM31Var};
 use circle_plonk_dsl_hints::FiatShamirHints;
+use circle_plonk_dsl_primitives::{BitsVar, ChannelVar, CirclePointQM31Var, HashVar};
+use circle_plonk_dsl_primitives::{M31Var, QM31Var};
 use stwo::core::fields::qm31::QM31;
 use stwo::core::fields::FieldExpOps;
 use stwo::core::pcs::PcsConfig;
@@ -180,8 +180,8 @@ mod test {
     use circle_plonk_dsl_constraint_system::var::AllocVar;
     use circle_plonk_dsl_constraint_system::ConstraintSystemRef;
     use circle_plonk_dsl_data_structures::PlonkWithPoseidonProofVar;
-    use circle_plonk_dsl_primitives::QM31Var;
     use circle_plonk_dsl_hints::FiatShamirHints;
+    use circle_plonk_dsl_primitives::QM31Var;
     use num_traits::One;
     use stwo::core::fields::qm31::QM31;
     use stwo::core::fri::FriConfig;

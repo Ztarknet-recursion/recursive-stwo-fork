@@ -1,6 +1,6 @@
+use crate::{M31Var, QM31Var};
 use circle_plonk_dsl_constraint_system::var::{AllocVar, AllocationMode, Var};
 use circle_plonk_dsl_constraint_system::ConstraintSystemRef;
-use crate::{M31Var, QM31Var};
 use itertools::Itertools;
 use num_traits::One;
 use std::ops::Neg;
@@ -70,9 +70,9 @@ impl LinePolyVar {
 #[cfg(test)]
 mod test {
     use crate::LinePolyVar;
+    use crate::{M31Var, QM31Var};
     use circle_plonk_dsl_constraint_system::var::AllocVar;
     use circle_plonk_dsl_constraint_system::ConstraintSystemRef;
-    use crate::{M31Var, QM31Var};
     use rand::prelude::StdRng;
     use rand::{Rng, SeedableRng};
     use stwo::core::circle::M31_CIRCLE_GEN;

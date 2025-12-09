@@ -1,11 +1,11 @@
 use crate::data_structures::{EvalAtRowVar, PointEvaluationAccumulatorVar};
 use crate::plonk::evaluate_plonk;
 use crate::poseidon::evaluate_poseidon;
-use circle_plonk_dsl_primitives::CirclePointQM31Var;
 use circle_plonk_dsl_constraint_system::var::Var;
 use circle_plonk_dsl_data_structures::{LookupElementsVar, PlonkWithPoseidonProofVar};
-use circle_plonk_dsl_primitives::{M31Var, QM31Var};
 use circle_plonk_dsl_hints::FiatShamirHints;
+use circle_plonk_dsl_primitives::CirclePointQM31Var;
+use circle_plonk_dsl_primitives::{M31Var, QM31Var};
 use itertools::Itertools;
 use stwo::core::poly::circle::CanonicCoset;
 use stwo::core::vcs::poseidon31_merkle::Poseidon31MerkleChannel;
@@ -124,12 +124,12 @@ impl CompositionCheck {
 #[cfg(test)]
 mod test {
     use crate::CompositionCheck;
-    use circle_plonk_dsl_primitives::CirclePointQM31Var;
     use circle_plonk_dsl_constraint_system::var::AllocVar;
     use circle_plonk_dsl_constraint_system::ConstraintSystemRef;
     use circle_plonk_dsl_data_structures::{LookupElementsVar, PlonkWithPoseidonProofVar};
-    use circle_plonk_dsl_primitives::QM31Var;
     use circle_plonk_dsl_hints::FiatShamirHints;
+    use circle_plonk_dsl_primitives::CirclePointQM31Var;
+    use circle_plonk_dsl_primitives::QM31Var;
     use num_traits::One;
     use stwo::core::fields::qm31::QM31;
     use stwo::core::fields::FieldExpOps;

@@ -1,9 +1,9 @@
 use cairo_air::{air::CairoInteractionClaim, opcodes_air::OpcodeInteractionClaim};
-use circle_plonk_dsl_primitives::ChannelVar;
 use circle_plonk_dsl_constraint_system::{
     var::{AllocVar, AllocationMode, Var},
     ConstraintSystemRef,
 };
+use circle_plonk_dsl_primitives::ChannelVar;
 use circle_plonk_dsl_primitives::QM31Var;
 
 #[derive(Debug, Clone)]

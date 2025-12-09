@@ -197,14 +197,18 @@ impl M31Var {
         sum
     }
 
-    pub fn add_assert_no_overflow(&self, rhs: &M31Var) {
+    pub fn add_assert_no_overflow(&self, rhs: &M31Var) -> M31Var {
         let max = M31Var::new_constant(&self.cs, &M31::from(P - 1));
         let remaining = &max - self;
-        
+
         let rhs_bits = crate::BitsVar::from_m31(rhs, 31);
         let remaining_bits = crate::BitsVar::from_m31(&remaining, 31);
 
-        rhs_bits.is_greater_than(&remaining_bits).equalverify(&crate::BitVar::new_false(&self.cs));
+        rhs_bits
+            .is_greater_than(&remaining_bits)
+            .equalverify(&crate::BitVar::new_false(&self.cs));
+
+        self + rhs
     }
 }
 

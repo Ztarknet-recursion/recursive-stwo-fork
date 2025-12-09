@@ -1,11 +1,11 @@
 pub mod implementation;
 pub mod parameters;
 
-use implementation::poseidon2_permute;
 use crate::bits::BitVar;
+use crate::{M31Var, QM31Var};
 use circle_plonk_dsl_constraint_system::var::{AllocVar, AllocationMode, Var};
 use circle_plonk_dsl_constraint_system::ConstraintSystemRef;
-use crate::{M31Var, QM31Var};
+use implementation::poseidon2_permute;
 use num_traits::{One, Zero};
 use stwo::core::fields::m31::M31;
 use stwo::core::fields::qm31::QM31;

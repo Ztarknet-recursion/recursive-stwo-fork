@@ -1,7 +1,7 @@
 use crate::bits::BitsVar;
 use crate::circle::CirclePointM31Var;
-use circle_plonk_dsl_constraint_system::var::{AllocVar, Var};
 use crate::M31Var;
+use circle_plonk_dsl_constraint_system::var::{AllocVar, Var};
 use itertools::Itertools;
 use num_traits::One;
 use std::collections::BTreeMap;
@@ -140,9 +140,7 @@ impl PointCarryingQueryVar {
     }
 
     pub fn get_next_point(&self) -> CirclePointM31Var {
-        self.point
-            .double()
-            .conditional_negate(&self.bits.0[0])
+        self.point.double().conditional_negate(&self.bits.0[0])
     }
 
     pub fn get_next_point_x(&self) -> M31Var {

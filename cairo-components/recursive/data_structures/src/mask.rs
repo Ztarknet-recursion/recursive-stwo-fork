@@ -1,19 +1,19 @@
 use stwo::core::fields::qm31::SECURE_EXTENSION_DEGREE;
 
-use crate::{fiat_shamir::ChannelU22Var, CairoClaimVar};
+use crate::{claim::CairoClaimVar, data_structures::BitIntVar};
 
 #[derive(Clone, Debug)]
 pub enum MaskVar {
     NoMask,
     ConstantLogSize(u32),
-    VariableLogSize(ChannelU22Var),
+    VariableLogSize(BitIntVar<5>),
 }
 
 pub struct MaskTableVar(pub Vec<(MaskVar, usize)>);
 
 impl MaskTableVar {
     pub fn from_claim(claim: &CairoClaimVar) -> Self {
-        let helper = |res: &mut Vec<(MaskVar, usize)>, log_size: &ChannelU22Var, l: usize| {
+        let helper = |res: &mut Vec<(MaskVar, usize)>, log_size: &BitIntVar<5>, l: usize| {
             res.push((MaskVar::NoMask, (l - 1) * SECURE_EXTENSION_DEGREE));
             res.push((
                 MaskVar::VariableLogSize(log_size.clone()),
@@ -165,7 +165,7 @@ mod tests {
 
                 let log_size = match j {
                     MaskVar::ConstantLogSize(log_size) => *log_size,
-                    MaskVar::VariableLogSize(log_size) => log_size.0.value.0,
+                    MaskVar::VariableLogSize(log_size) => log_size.bits.compose().value.0,
                     _ => panic!("Invalid mask var"),
                 };
                 let trace_step = CanonicCoset::new(log_size).step();

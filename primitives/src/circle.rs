@@ -1,8 +1,8 @@
 use crate::bits::{BitVar, BitsVar};
 use crate::channel::ChannelVar;
+use crate::{M31Var, QM31Var};
 use circle_plonk_dsl_constraint_system::var::{AllocVar, AllocationMode, Var};
 use circle_plonk_dsl_constraint_system::ConstraintSystemRef;
-use crate::{M31Var, QM31Var};
 use itertools::Itertools;
 use num_traits::{One, Zero};
 use std::ops::{Add, Neg};
@@ -237,11 +237,11 @@ impl Add<&CirclePoint<M31>> for &CirclePointQM31Var {
 
 #[cfg(test)]
 mod test {
-    use crate::CirclePointM31Var;
     use crate::BitsVar;
+    use crate::CirclePointM31Var;
+    use crate::M31Var;
     use circle_plonk_dsl_constraint_system::var::AllocVar;
     use circle_plonk_dsl_constraint_system::ConstraintSystemRef;
-    use crate::M31Var;
     use stwo::core::fields::m31::M31;
     use stwo::core::poly::circle::CanonicCoset;
     use stwo::core::utils::bit_reverse_index;

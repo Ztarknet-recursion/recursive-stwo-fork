@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 stwo.workspace = true
 stwo-examples.workspace = true
+stwo-cairo-common.workspace = true
 cairo-plonk-dsl-hints = { path = "../../hints" }
 circle-plonk-dsl-primitives = { path = "../../../primitives" }
 circle-plonk-dsl-constraint-system = { path = "../../../constraint_system" }

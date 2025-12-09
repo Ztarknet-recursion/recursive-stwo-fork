@@ -2,13 +2,13 @@ use crate::data_structures::{
     accumulate_row_quotients_var, quotient_constants_var, ColumnSampleBatchVar, PointSampleVar,
     ShiftIndex,
 };
-use circle_plonk_dsl_primitives::{CirclePointM31Var, CirclePointQM31Var};
 use circle_plonk_dsl_constraint_system::var::Var;
 use circle_plonk_dsl_constraint_system::ConstraintSystemRef;
 use circle_plonk_dsl_data_structures::{DecommitmentVar, PlonkWithPoseidonProofVar};
 use circle_plonk_dsl_fiat_shamir::FiatShamirResults;
-use circle_plonk_dsl_primitives::{M31Var, QM31Var};
 use circle_plonk_dsl_hints::{AnswerHints, DecommitHints, FiatShamirHints};
+use circle_plonk_dsl_primitives::{CirclePointM31Var, CirclePointQM31Var};
+use circle_plonk_dsl_primitives::{M31Var, QM31Var};
 use circle_plonk_dsl_primitives::{PointCarryingQueryVar, QueryPositionsPerLogSizeVar};
 use itertools::{izip, multiunzip, Itertools};
 use std::cmp::Reverse;
@@ -385,13 +385,13 @@ impl AnswerResults {
 #[cfg(test)]
 mod test {
     use crate::AnswerResults;
-    use circle_plonk_dsl_primitives::CirclePointQM31Var;
     use circle_plonk_dsl_constraint_system::var::AllocVar;
     use circle_plonk_dsl_constraint_system::ConstraintSystemRef;
     use circle_plonk_dsl_data_structures::PlonkWithPoseidonProofVar;
     use circle_plonk_dsl_fiat_shamir::FiatShamirResults;
-    use circle_plonk_dsl_primitives::QM31Var;
     use circle_plonk_dsl_hints::{AnswerHints, DecommitHints, FiatShamirHints};
+    use circle_plonk_dsl_primitives::CirclePointQM31Var;
+    use circle_plonk_dsl_primitives::QM31Var;
     use num_traits::One;
     use stwo::core::fields::qm31::QM31;
     use stwo::core::fri::FriConfig;

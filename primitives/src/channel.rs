@@ -1,7 +1,7 @@
+use crate::poseidon31::Poseidon2HalfVar;
+use crate::{M31Var, QM31Var};
 use circle_plonk_dsl_constraint_system::var::{AllocVar, Var};
 use circle_plonk_dsl_constraint_system::ConstraintSystemRef;
-use crate::{M31Var, QM31Var};
-use crate::poseidon31::Poseidon2HalfVar;
 use stwo::core::fields::m31::M31;
 
 pub type HashVar = Poseidon2HalfVar;

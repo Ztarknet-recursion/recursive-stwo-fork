@@ -1,8 +1,8 @@
-use circle_plonk_dsl_primitives::HashVar;
 use circle_plonk_dsl_constraint_system::{
     var::{AllocVar, AllocationMode, Var},
     ConstraintSystemRef,
 };
+use circle_plonk_dsl_primitives::HashVar;
 use circle_plonk_dsl_primitives::QM31Var;
 use stwo::core::{
     pcs::TreeVec, proof::StarkProof, vcs::poseidon31_merkle::Poseidon31MerkleHasher, ColumnVec,

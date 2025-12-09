@@ -1,11 +1,11 @@
+use crate::M31Var;
 use circle_plonk_dsl_constraint_system::var::{AllocVar, AllocationMode, Var};
 use circle_plonk_dsl_constraint_system::ConstraintSystemRef;
-use crate::M31Var;
 use num_traits::{One, Zero};
 use std::ops::{BitAnd, BitOr, Neg, Range, RangeFrom};
 use stwo::core::fields::m31::M31;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct BitVar(pub M31Var);
 
 impl Var for BitVar {
@@ -66,7 +66,7 @@ impl BitVar {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct BitsVar(pub Vec<BitVar>);
 
 impl Var for BitsVar {
@@ -137,6 +137,15 @@ impl BitsVar {
         }
         sum
     }
+
+    pub fn compose(&self) -> M31Var {
+        assert!(
+            self.0.len() <= 31,
+            "BitsVar::compose: length must be no larger than 31, got {}",
+            self.0.len()
+        );
+        self.compose_range(0..self.0.len())
+    }
 }
 
 impl BitsVar {
@@ -183,8 +192,8 @@ impl BitsVar {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use circle_plonk_dsl_constraint_system::ConstraintSystemRef;
     use crate::M31Var;
+    use circle_plonk_dsl_constraint_system::ConstraintSystemRef;
     use stwo::core::fields::m31::M31;
 
     #[test]
