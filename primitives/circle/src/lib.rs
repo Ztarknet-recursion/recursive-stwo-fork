@@ -1,4 +1,4 @@
-use circle_plonk_dsl_bits::BitsVar;
+use circle_plonk_dsl_bits::{BitVar, BitsVar};
 use circle_plonk_dsl_channel::ChannelVar;
 use circle_plonk_dsl_constraint_system::var::{AllocVar, AllocationMode, Var};
 use circle_plonk_dsl_constraint_system::ConstraintSystemRef;
@@ -71,13 +71,8 @@ impl CirclePointM31Var {
 }
 
 impl CirclePointM31Var {
-    pub fn select(
-        cs: &ConstraintSystemRef,
-        point: &CirclePoint<BaseField>,
-        bit_value: bool,
-        bit_variable: usize,
-    ) -> Self {
-        let value = if bit_value {
+    pub fn select(cs: &ConstraintSystemRef, point: &CirclePoint<BaseField>, bit: &BitVar) -> Self {
+        let value = if bit.0.value.0 != 0 {
             *point
         } else {
             CirclePoint {
@@ -86,10 +81,10 @@ impl CirclePointM31Var {
             }
         };
 
-        let mut new_x = cs.mul_constant(bit_variable, value.x - M31::one());
+        let mut new_x = cs.mul_constant(bit.0.variable, value.x - M31::one());
         new_x = cs.add(new_x, 1);
 
-        let new_y = cs.mul_constant(bit_variable, value.y);
+        let new_y = cs.mul_constant(bit.0.variable, value.y);
 
         Self {
             x: M31Var {
@@ -105,17 +100,17 @@ impl CirclePointM31Var {
         }
     }
 
-    pub fn conditional_negate(&self, bit_value: bool, bit_variable: usize) -> Self {
+    pub fn conditional_negate(&self, bit: &BitVar) -> Self {
         let cs = self.cs();
 
-        let y_value = if bit_value {
+        let y_value = if bit.0.value.0 != 0 {
             -self.y.value
         } else {
             self.y.value
         };
 
         // y_multiplier = 1 if bit = 0, or y_multiplier = -1 if bit = 1
-        let mut y_multiplier = cs.mul_constant(bit_variable, M31::from(2).neg());
+        let mut y_multiplier = cs.mul_constant(bit.0.variable, M31::from(2).neg());
         y_multiplier = cs.add(y_multiplier, 1);
 
         let y_variable = cs.mul(y_multiplier, self.y.variable);
@@ -133,7 +128,7 @@ impl CirclePointM31Var {
 
 impl CirclePointM31Var {
     pub fn bit_reverse_at(coset: &Coset, bits_var: &BitsVar, log_size: u32) -> Self {
-        assert_eq!(bits_var.value.len(), log_size as usize);
+        assert_eq!(bits_var.0.len(), log_size as usize);
         let cs = bits_var.cs();
 
         let initial = coset.initial;
@@ -147,24 +142,15 @@ impl CirclePointM31Var {
         }
 
         let mut steps_var = Vec::with_capacity(log_size as usize);
-        for ((step, &bit_value), &bit_variable) in steps
-            .iter()
-            .zip_eq(bits_var.value.iter().skip(1).rev())
-            .zip_eq(bits_var.variables.iter().skip(1).rev())
-        {
-            steps_var.push(CirclePointM31Var::select(
-                &cs,
-                step,
-                bit_value,
-                bit_variable,
-            ));
+        for (step, bit) in steps.iter().zip_eq(bits_var.0.iter().skip(1).rev()) {
+            steps_var.push(CirclePointM31Var::select(&cs, step, bit));
         }
 
         let mut sum = CirclePointM31Var::new_constant(&cs, &initial);
         for step_var in steps_var.iter() {
             sum = &sum + &step_var;
         }
-        sum = sum.conditional_negate(bits_var.value[0], bits_var.variables[0]);
+        sum = sum.conditional_negate(&bits_var.0[0]);
         sum
     }
 }

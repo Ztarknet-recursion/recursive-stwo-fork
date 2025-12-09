@@ -10,20 +10,20 @@ pub mod qm31;
 pub use qm31::*;
 
 use num_traits::{One, Zero};
+use std::fmt::Debug;
+use std::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub};
 use stwo::core::fields::m31::M31;
 use stwo::core::fields::qm31::QM31;
-use std::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub};
-use std::fmt::Debug;
-use stwo::core::fields::{FieldExpOps, m31::BaseField, qm31::SecureField};
+use stwo::core::fields::{m31::BaseField, qm31::SecureField, FieldExpOps};
 
 pub trait EvalAtRowFieldVar {
-    type F: FieldExpOps 
-        + Clone 
-        + Debug 
-        + Zero 
-        + Neg<Output = Self::F> 
-        + AddAssign 
-        + AddAssign<BaseField> 
+    type F: FieldExpOps
+        + Clone
+        + Debug
+        + Zero
+        + Neg<Output = Self::F>
+        + AddAssign
+        + AddAssign<BaseField>
         + Add<Self::F, Output = Self::F>
         + Sub<Self::F, Output = Self::F>
         + Mul<BaseField, Output = Self::F>
@@ -120,7 +120,9 @@ impl AddAssign<BaseField> for WrappedM31Var {
                 *self = WrappedM31Var::Constant(*value + rhs);
             }
             WrappedM31Var::Allocated(variable) => {
-                *self = WrappedM31Var::Allocated(&*variable + &M31Var::new_constant(&variable.cs(), &rhs));
+                *self = WrappedM31Var::Allocated(
+                    &*variable + &M31Var::new_constant(&variable.cs(), &rhs),
+                );
             }
         }
     }
@@ -164,8 +166,7 @@ impl MulAssign for WrappedM31Var {
                 WrappedM31Var::Constant(*value * *rhs)
             }
             (WrappedM31Var::Allocated(variable), WrappedM31Var::Constant(rhs))
-            | 
-            (WrappedM31Var::Constant(rhs), WrappedM31Var::Allocated(variable)) => {
+            | (WrappedM31Var::Constant(rhs), WrappedM31Var::Allocated(variable)) => {
                 WrappedM31Var::Allocated(variable * &M31Var::new_constant(&variable.cs(), rhs))
             }
             (WrappedM31Var::Allocated(variable), WrappedM31Var::Allocated(rhs)) => {
@@ -192,7 +193,9 @@ impl Mul<BaseField> for WrappedM31Var {
     fn mul(self, rhs: BaseField) -> Self::Output {
         match self {
             WrappedM31Var::Constant(value) => WrappedM31Var::Constant(value * rhs),
-            WrappedM31Var::Allocated(variable) => WrappedM31Var::Allocated(variable.mul_constant(rhs)),
+            WrappedM31Var::Allocated(variable) => {
+                WrappedM31Var::Allocated(variable.mul_constant(rhs))
+            }
         }
     }
 }
@@ -209,9 +212,9 @@ impl Add<SecureField> for WrappedM31Var {
     fn add(self, rhs: SecureField) -> Self::Output {
         match self {
             WrappedM31Var::Constant(value) => WrappedQM31Var::Constant(rhs + value),
-            WrappedM31Var::Allocated(variable) => WrappedQM31Var::Allocated(
-                &QM31Var::new_constant(&variable.cs, &rhs) + &variable
-            ),
+            WrappedM31Var::Allocated(variable) => {
+                WrappedQM31Var::Allocated(&QM31Var::new_constant(&variable.cs, &rhs) + &variable)
+            }
         }
     }
 }
@@ -222,9 +225,9 @@ impl Mul<SecureField> for WrappedM31Var {
     fn mul(self, rhs: SecureField) -> Self::Output {
         match self {
             WrappedM31Var::Constant(value) => WrappedQM31Var::Constant(value * rhs),
-            WrappedM31Var::Allocated(variable) => WrappedQM31Var::Allocated(
-                &QM31Var::new_constant(&variable.cs, &rhs) * &variable
-            ),
+            WrappedM31Var::Allocated(variable) => {
+                WrappedQM31Var::Allocated(&QM31Var::new_constant(&variable.cs, &rhs) * &variable)
+            }
         }
     }
 }
@@ -269,8 +272,7 @@ impl AddAssign for WrappedQM31Var {
                 WrappedQM31Var::Constant(*value + *rhs)
             }
             (WrappedQM31Var::Allocated(variable), WrappedQM31Var::Constant(rhs))
-            | 
-            (WrappedQM31Var::Constant(rhs), WrappedQM31Var::Allocated(variable)) => {
+            | (WrappedQM31Var::Constant(rhs), WrappedQM31Var::Allocated(variable)) => {
                 WrappedQM31Var::Allocated(variable + &QM31Var::new_constant(&variable.cs(), rhs))
             }
             (WrappedQM31Var::Allocated(variable), WrappedQM31Var::Allocated(rhs)) => {
@@ -297,7 +299,9 @@ impl Add<BaseField> for WrappedQM31Var {
     fn add(self, rhs: BaseField) -> Self::Output {
         match self {
             WrappedQM31Var::Constant(value) => WrappedQM31Var::Constant(value + rhs),
-            WrappedQM31Var::Allocated(variable) => WrappedQM31Var::Allocated(&variable + &QM31Var::new_constant(&variable.cs(), &QM31::from(rhs))),
+            WrappedQM31Var::Allocated(variable) => WrappedQM31Var::Allocated(
+                &variable + &QM31Var::new_constant(&variable.cs(), &QM31::from(rhs)),
+            ),
         }
     }
 }
@@ -308,7 +312,9 @@ impl Mul<BaseField> for WrappedQM31Var {
     fn mul(self, rhs: BaseField) -> Self::Output {
         match self {
             WrappedQM31Var::Constant(value) => WrappedQM31Var::Constant(value * rhs),
-            WrappedQM31Var::Allocated(variable) => WrappedQM31Var::Allocated(&variable * &QM31Var::new_constant(&variable.cs(), &QM31::from(rhs))),
+            WrappedQM31Var::Allocated(variable) => WrappedQM31Var::Allocated(
+                &variable * &QM31Var::new_constant(&variable.cs(), &QM31::from(rhs)),
+            ),
         }
     }
 }
@@ -319,7 +325,9 @@ impl Add<SecureField> for WrappedQM31Var {
     fn add(self, rhs: SecureField) -> Self::Output {
         match self {
             WrappedQM31Var::Constant(value) => WrappedQM31Var::Constant(value + rhs),
-            WrappedQM31Var::Allocated(variable) => WrappedQM31Var::Allocated(&variable + &QM31Var::new_constant(&variable.cs(), &rhs)),
+            WrappedQM31Var::Allocated(variable) => {
+                WrappedQM31Var::Allocated(&variable + &QM31Var::new_constant(&variable.cs(), &rhs))
+            }
         }
     }
 }
@@ -330,7 +338,9 @@ impl Sub<SecureField> for WrappedQM31Var {
     fn sub(self, rhs: SecureField) -> Self::Output {
         match self {
             WrappedQM31Var::Constant(value) => WrappedQM31Var::Constant(value - rhs),
-            WrappedQM31Var::Allocated(variable) => WrappedQM31Var::Allocated(&variable - &QM31Var::new_constant(&variable.cs(), &rhs)),
+            WrappedQM31Var::Allocated(variable) => {
+                WrappedQM31Var::Allocated(&variable - &QM31Var::new_constant(&variable.cs(), &rhs))
+            }
         }
     }
 }
@@ -341,7 +351,9 @@ impl Mul<SecureField> for WrappedQM31Var {
     fn mul(self, rhs: SecureField) -> Self::Output {
         match self {
             WrappedQM31Var::Constant(value) => WrappedQM31Var::Constant(value * rhs),
-            WrappedQM31Var::Allocated(variable) => WrappedQM31Var::Allocated(&variable * &QM31Var::new_constant(&variable.cs(), &rhs)),
+            WrappedQM31Var::Allocated(variable) => {
+                WrappedQM31Var::Allocated(&variable * &QM31Var::new_constant(&variable.cs(), &rhs))
+            }
         }
     }
 }
@@ -355,7 +367,9 @@ impl Add<WrappedM31Var> for WrappedQM31Var {
                 WrappedQM31Var::Constant(value + rhs)
             }
             (WrappedQM31Var::Allocated(variable), WrappedM31Var::Constant(rhs)) => {
-                WrappedQM31Var::Allocated(&variable + &QM31Var::new_constant(&variable.cs(), &QM31::from(rhs)))
+                WrappedQM31Var::Allocated(
+                    &variable + &QM31Var::new_constant(&variable.cs(), &QM31::from(rhs)),
+                )
             }
             (WrappedQM31Var::Constant(rhs), WrappedM31Var::Allocated(variable)) => {
                 WrappedQM31Var::Allocated(&variable + &QM31Var::new_constant(&variable.cs(), &rhs))
@@ -376,7 +390,9 @@ impl Mul<WrappedM31Var> for WrappedQM31Var {
                 WrappedQM31Var::Constant(value * rhs)
             }
             (WrappedQM31Var::Allocated(variable), WrappedM31Var::Constant(rhs)) => {
-                WrappedQM31Var::Allocated(&variable * &QM31Var::new_constant(&variable.cs(), &QM31::from(rhs)))
+                WrappedQM31Var::Allocated(
+                    &variable * &QM31Var::new_constant(&variable.cs(), &QM31::from(rhs)),
+                )
             }
             (WrappedQM31Var::Constant(rhs), WrappedM31Var::Allocated(variable)) => {
                 WrappedQM31Var::Allocated(&QM31Var::new_constant(&variable.cs(), &rhs) * &variable)
@@ -397,7 +413,9 @@ impl Sub<WrappedQM31Var> for WrappedQM31Var {
                 WrappedQM31Var::Constant(value - rhs)
             }
             (WrappedQM31Var::Allocated(variable), WrappedQM31Var::Constant(rhs)) => {
-                WrappedQM31Var::Allocated(&variable - &QM31Var::new_constant(&variable.cs(), &QM31::from(rhs)))
+                WrappedQM31Var::Allocated(
+                    &variable - &QM31Var::new_constant(&variable.cs(), &QM31::from(rhs)),
+                )
             }
             (WrappedQM31Var::Constant(rhs), WrappedQM31Var::Allocated(variable)) => {
                 WrappedQM31Var::Allocated(&QM31Var::new_constant(&variable.cs(), &rhs) - &variable)
@@ -418,9 +436,10 @@ impl Mul<WrappedQM31Var> for WrappedQM31Var {
                 WrappedQM31Var::Constant(value * rhs)
             }
             (WrappedQM31Var::Allocated(variable), WrappedQM31Var::Constant(rhs))
-            | 
-            (WrappedQM31Var::Constant(rhs), WrappedQM31Var::Allocated(variable)) => {
-                WrappedQM31Var::Allocated(&variable * &QM31Var::new_constant(&variable.cs(), &QM31::from(rhs)))
+            | (WrappedQM31Var::Constant(rhs), WrappedQM31Var::Allocated(variable)) => {
+                WrappedQM31Var::Allocated(
+                    &variable * &QM31Var::new_constant(&variable.cs(), &QM31::from(rhs)),
+                )
             }
             (WrappedQM31Var::Allocated(variable), WrappedQM31Var::Allocated(rhs)) => {
                 WrappedQM31Var::Allocated(&variable * &rhs)
@@ -439,7 +458,9 @@ impl From<WrappedM31Var> for WrappedQM31Var {
     fn from(value: WrappedM31Var) -> Self {
         match value {
             WrappedM31Var::Constant(value) => WrappedQM31Var::Constant(QM31::from(value)),
-            WrappedM31Var::Allocated(variable) => WrappedQM31Var::Allocated(QM31Var::from(&variable)),
+            WrappedM31Var::Allocated(variable) => {
+                WrappedQM31Var::Allocated(QM31Var::from(&variable))
+            }
         }
     }
 }

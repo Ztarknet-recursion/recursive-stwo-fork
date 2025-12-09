@@ -1,4 +1,5 @@
 use crate::implementation::poseidon2_permute;
+use circle_plonk_dsl_bits::BitVar;
 use circle_plonk_dsl_constraint_system::var::{AllocVar, AllocationMode, Var};
 use circle_plonk_dsl_constraint_system::ConstraintSystemRef;
 use circle_plonk_dsl_fields::{M31Var, QM31Var};
@@ -19,7 +20,7 @@ pub struct Poseidon2HalfVar {
     pub sel_value: usize,
 }
 
-pub type IsSwap = Option<(bool, usize)>;
+pub type IsSwap = Option<BitVar>;
 
 impl Poseidon2HalfVar {
     pub fn value(&self) -> [M31; 8] {
@@ -191,7 +192,8 @@ impl Poseidon2HalfVar {
     ) -> (Poseidon2HalfVar, Poseidon2HalfVar) {
         let cs = left.cs().and(&right.cs());
 
-        let mut state: [M31; 16] = if is_swap.is_none() || !is_swap.unwrap().0 {
+        let mut state: [M31; 16] = if is_swap.is_none() || is_swap.as_ref().unwrap().0.value.0 == 0
+        {
             std::array::from_fn(|i| {
                 if i < 8 {
                     left.value[i]
@@ -287,10 +289,10 @@ impl Poseidon2HalfVar {
             wire: new_right.sel_value,
             hash: new_right.value,
         };
-        let swap_option = if let Some((swap_bit_val, swap_bit_addr)) = is_swap {
+        let swap_option = if let Some(swap_bit) = is_swap.as_ref() {
             SwapOption {
-                addr: swap_bit_addr,
-                swap: swap_bit_val,
+                addr: swap_bit.0.variable,
+                swap: swap_bit.0.value.0 != 0,
             }
         } else {
             SwapOption {

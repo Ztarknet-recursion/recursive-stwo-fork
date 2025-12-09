@@ -9,3 +9,4 @@ stwo.workspace = true
 stwo-examples.workspace = true
 num-traits.workspace = true
 circle-plonk-dsl-fields = { path = "../fields" }
+circle-plonk-dsl-bits = { path = "../bits" }

@@ -177,4 +177,39 @@ impl M31Var {
 
         out
     }
+
+    pub fn exp2(&self) -> M31Var {
+        assert!(self.value.0 <= 30);
+
+        let cs = self.cs();
+
+        let mut sum = M31Var::one(&cs);
+        let mut cur = self.clone();
+
+        for _ in 0..30 {
+            let is_zero = cur.is_zero();
+            let is_not_zero = &M31Var::one(&cs) - &is_zero;
+
+            cur = &cur - &is_not_zero;
+            sum = &sum + &(&sum * &is_not_zero);
+        }
+
+        sum
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_exp2() {
+        let cs = ConstraintSystemRef::new_plonk_with_poseidon_ref();
+        let m31 = M31Var::new_witness(&cs, &M31::from(30));
+        let result = m31.exp2();
+        result.equalverify(&M31Var::new_constant(&cs, &M31::from(1 << 30)));
+
+        cs.pad();
+        cs.check_arithmetics();
+    }
 }

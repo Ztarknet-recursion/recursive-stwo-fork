@@ -1,3 +1,4 @@
+use circle_plonk_dsl_bits::BitVar;
 use circle_plonk_dsl_constraint_system::var::Var;
 use circle_plonk_dsl_fields::{M31Var, QM31Var};
 use circle_plonk_dsl_poseidon31::Poseidon2HalfVar;
@@ -22,21 +23,18 @@ impl Poseidon31MerkleHasherVar {
     pub fn hash_tree_with_swap(
         left: &Poseidon2HalfVar,
         right: &Poseidon2HalfVar,
-        bit_value: bool,
-        bit_variable: usize,
+        bit: &BitVar,
     ) -> Poseidon2HalfVar {
-        Poseidon2HalfVar::swap_permute_get_rate(&left, &right, Some((bit_value, bit_variable)))
+        Poseidon2HalfVar::swap_permute_get_rate(&left, &right, Some(bit.clone()))
     }
 
     pub fn hash_tree_with_column_hash_with_swap(
         left: &Poseidon2HalfVar,
         right: &Poseidon2HalfVar,
-        bit_value: bool,
-        bit_variable: usize,
+        bit: &BitVar,
         column_hash: &Poseidon2HalfVar,
     ) -> Poseidon2HalfVar {
-        let hash_tree =
-            Poseidon2HalfVar::swap_permute_get_rate(&left, &right, Some((bit_value, bit_variable)));
+        let hash_tree = Poseidon2HalfVar::swap_permute_get_rate(&left, &right, Some(bit.clone()));
         Poseidon2HalfVar::permute_get_rate(&hash_tree, column_hash)
     }
 
