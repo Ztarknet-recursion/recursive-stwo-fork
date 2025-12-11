@@ -1,6 +1,6 @@
 use cairo_air::CairoProof;
 use stwo::core::{
-    air::{accumulation::PointEvaluationAccumulator, Components},
+    air::{accumulation::PointEvaluationAccumulator, Component, Components},
     fields::qm31::{SecureField, SECURE_EXTENSION_DEGREE},
     vcs::poseidon31_merkle::Poseidon31MerkleHasher,
 };
@@ -454,6 +454,43 @@ impl CairoCompositionHints {
         };
 
         println!("composition_oods_eval: {:?}", composition_oods_eval);
+
+        {
+            let mut evaluation_accumulator = PointEvaluationAccumulator::new(*random_coeff);
+            component_generator.opcodes.add[0].evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+            component_generator.opcodes.add_small[0].evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+            component_generator.opcodes.add_ap[0].evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+            component_generator.opcodes.assert_eq[0].evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+            component_generator.opcodes.assert_eq_imm[0].evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+            component_generator.opcodes.assert_eq_double_deref[0]
+                .evaluate_constraint_quotients_at_point(
+                    oods_point,
+                    &proof.stark_proof.sampled_values,
+                    &mut evaluation_accumulator,
+                );
+            let res = evaluation_accumulator.finalize();
+            println!("current accumulated result: {:?}", res);
+        }
 
         assert_eq!(
             composition_oods_eval,

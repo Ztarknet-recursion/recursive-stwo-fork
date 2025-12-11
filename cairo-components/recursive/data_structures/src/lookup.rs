@@ -3,27 +3,22 @@ use circle_plonk_dsl_primitives::ChannelVar;
 use circle_plonk_dsl_primitives::M31Var;
 use circle_plonk_dsl_primitives::QM31Var;
 use stwo::core::fields::m31::M31;
-use stwo_constraint_framework::logup::LookupElements;
 
 #[derive(Debug, Clone)]
-pub struct LookupElementsVar<const N: usize> {
+pub struct LookupElementsVar {
     pub z: QM31Var,
     pub alpha: QM31Var,
-    pub alpha_powers: [QM31Var; N],
+    pub alpha_powers: Vec<QM31Var>,
 }
 
-impl<const N: usize> Var for LookupElementsVar<N> {
-    type Value = LookupElements<N>;
-
-    fn cs(&self) -> ConstraintSystemRef {
+impl LookupElementsVar {
+    pub fn cs(&self) -> ConstraintSystemRef {
         self.z.cs().and(&self.alpha.cs())
     }
-}
 
-impl<const N: usize> LookupElementsVar<N> {
-    pub fn draw(channel: &mut ChannelVar) -> Self {
+    pub fn draw(channel: &mut ChannelVar, n: usize) -> Self {
         let [z, alpha] = channel.draw_felts();
-        Self::from_z_and_alpha(z, alpha)
+        Self::from_z_and_alpha(z, alpha, n)
     }
 
     pub fn combine_constant(&self, values: &[M31]) -> QM31Var {
@@ -56,22 +51,20 @@ impl<const N: usize> LookupElementsVar<N> {
             - &self.z
     }
 
-    pub fn from_z_and_alpha(z: QM31Var, alpha: QM31Var) -> Self {
+    pub fn from_z_and_alpha(z: QM31Var, alpha: QM31Var, n: usize) -> Self {
         let cs = z.cs().and(&alpha.cs());
 
-        let mut alpha_powers = Vec::with_capacity(N);
+        let mut alpha_powers = Vec::with_capacity(n);
         alpha_powers.push(QM31Var::one(&cs));
-        if N > 1 {
+        if n > 1 {
             alpha_powers.push(alpha.clone());
         }
 
         let mut cur = alpha.clone();
-        for _ in 2..N {
+        for _ in 2..n {
             cur = &cur * &alpha;
             alpha_powers.push(cur.clone());
         }
-
-        let alpha_powers: [QM31Var; N] = alpha_powers.try_into().unwrap();
 
         Self {
             z,
@@ -84,11 +77,11 @@ impl<const N: usize> LookupElementsVar<N> {
 // Macro to generate lookup element structs with draw method
 macro_rules! lookup_element_var {
     ($name:ident, $n:expr) => {
-        pub struct $name(pub LookupElementsVar<$n>);
+        pub struct $name(pub LookupElementsVar);
 
         impl $name {
             pub fn draw(channel: &mut ChannelVar) -> Self {
-                Self(LookupElementsVar::<$n>::draw(channel))
+                Self(LookupElementsVar::draw(channel, $n))
             }
         }
     };
