@@ -8,10 +8,10 @@ pub struct PointEvaluationAccumulatorVar {
 }
 
 impl PointEvaluationAccumulatorVar {
-    pub fn new(random_coeff: QM31Var) -> Self {
+    pub fn new(random_coeff: &QM31Var) -> Self {
         let cs = random_coeff.cs();
         Self {
-            random_coeff,
+            random_coeff: random_coeff.clone(),
             accumulation: QM31Var::zero(&cs),
         }
     }

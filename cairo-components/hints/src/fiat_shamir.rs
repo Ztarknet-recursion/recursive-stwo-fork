@@ -160,8 +160,6 @@ impl CairoFiatShamirHints {
 
     pub fn new(proof: &CairoProof<Poseidon31MerkleHasher>) -> Self {
         let claim = &proof.claim;
-        //let interaction_pow = proof.interaction_pow;
-        //let interaction_claim = &proof.interaction_claim;
         let stark_proof = &proof.stark_proof;
         let channel_salt = proof.channel_salt;
 

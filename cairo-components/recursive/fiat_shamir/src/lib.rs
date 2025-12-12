@@ -13,7 +13,11 @@ use circle_plonk_dsl_primitives::{
 use stwo::core::fields::m31::M31;
 use stwo_cairo_common::memory::LARGE_MEMORY_VALUE_ID_BASE;
 
-pub struct CairoFiatShamirResults {}
+pub struct CairoFiatShamirResults {
+    pub oods_point: CirclePointQM31Var,
+    pub random_coeff: QM31Var,
+    pub after_sampled_values_random_coeff: QM31Var,
+}
 
 impl CairoFiatShamirResults {
     pub fn compute(fiat_shamir_hints: &CairoFiatShamirHints, proof: &CairoProofVar) -> Self {
@@ -37,11 +41,11 @@ impl CairoFiatShamirResults {
         proof.interaction_claim.mix_into(&mut channel);
 
         channel.mix_root(&proof.stark_proof.interaction_commitment);
-        let _random_coeff = channel.draw_felts()[0].clone();
+        let random_coeff = channel.draw_felts()[0].clone();
         channel.mix_root(&proof.stark_proof.composition_commitment);
 
         // Draw OODS point.
-        let _oods_point = CirclePointQM31Var::from_channel(&mut channel);
+        let oods_point = CirclePointQM31Var::from_channel(&mut channel);
 
         let sampled_values_flattened = proof.stark_proof.sampled_values.clone().flatten_cols();
         for chunk in sampled_values_flattened.chunks(2) {
@@ -51,7 +55,7 @@ impl CairoFiatShamirResults {
                 channel.mix_two_felts(&chunk[0], &chunk[1]);
             }
         }
-        let _after_sampled_values_random_coeff = channel.draw_felts()[0].clone();
+        let after_sampled_values_random_coeff = channel.draw_felts()[0].clone();
 
         println!(
             "channel after drawing another random coeff: {:?}",
@@ -71,7 +75,11 @@ impl CairoFiatShamirResults {
         );
         lookup_sum.equalverify(&QM31Var::zero(&cs));
 
-        Self {}
+        Self {
+            oods_point,
+            random_coeff,
+            after_sampled_values_random_coeff,
+        }
     }
 
     pub fn check_claim(claim: &CairoClaimVar) {

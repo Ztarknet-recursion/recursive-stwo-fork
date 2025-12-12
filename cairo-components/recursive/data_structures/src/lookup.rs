@@ -1,5 +1,4 @@
 use circle_plonk_dsl_constraint_system::{var::Var, ConstraintSystemRef};
-use circle_plonk_dsl_primitives::fields::WrappedM31Var;
 use circle_plonk_dsl_primitives::fields::WrappedQM31Var;
 use circle_plonk_dsl_primitives::ChannelVar;
 use circle_plonk_dsl_primitives::M31Var;
@@ -90,32 +89,6 @@ macro_rules! lookup_element_var {
         impl $name {
             pub fn draw(channel: &mut ChannelVar) -> Self {
                 Self(LookupElementsVar::draw(channel, $n))
-            }
-        }
-
-        impl Relation<WrappedM31Var, WrappedQM31Var> for $name {
-            fn combine(&self, values: &[WrappedM31Var]) -> WrappedQM31Var {
-                let cs = self.0.cs();
-                WrappedQM31Var::wrap(
-                    self.0
-                        .combine(&values.iter().map(|v| v.unwrap(&cs)).collect_vec()),
-                )
-            }
-
-            fn combine_ef(&self, values: &[WrappedQM31Var]) -> WrappedQM31Var {
-                let cs = self.0.cs();
-                WrappedQM31Var::wrap(
-                    self.0
-                        .combine_ef(&values.iter().map(|v| v.unwrap(&cs)).collect_vec()),
-                )
-            }
-
-            fn get_name(&self) -> &str {
-                stringify!($name)
-            }
-
-            fn get_size(&self) -> usize {
-                self.0.alpha_powers.len()
             }
         }
 

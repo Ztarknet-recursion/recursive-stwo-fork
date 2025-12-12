@@ -85,9 +85,9 @@ impl<const N: usize> BitIntVar<N> {
             flags.push(flag);
         }
 
-        let mut product = flags[0].clone();
+        let mut product = flags[0].0.clone();
         for flag in flags.iter().skip(1) {
-            product = &product * flag;
+            product = &product * &flag.0;
         }
         product.equalverify(&M31Var::zero(&self.cs()));
     }

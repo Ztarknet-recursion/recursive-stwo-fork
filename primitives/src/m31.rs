@@ -4,6 +4,8 @@ use num_traits::{One, Zero};
 use std::ops::{Add, Mul, Neg, Sub};
 use stwo::core::fields::m31::{M31, P};
 
+use crate::BitVar;
+
 #[derive(Debug, Clone)]
 pub struct M31Var {
     pub cs: ConstraintSystemRef,
@@ -159,11 +161,11 @@ impl M31Var {
         }
     }
 
-    pub fn is_eq(&self, rhs: &M31Var) -> M31Var {
+    pub fn is_eq(&self, rhs: &M31Var) -> BitVar {
         (self - rhs).is_zero()
     }
 
-    pub fn is_zero(&self) -> M31Var {
+    pub fn is_zero(&self) -> BitVar {
         let cs = self.cs();
         let inv = M31Var::new_witness(&self.cs, &{
             if self.value.is_zero() {
@@ -175,7 +177,7 @@ impl M31Var {
         let out = &(self * &inv).neg() + &M31Var::one(&cs);
         cs.insert_gate(self.variable, out.variable, 0, M31::zero());
 
-        out
+        BitVar(out)
     }
 
     pub fn exp2(&self) -> M31Var {
@@ -188,7 +190,7 @@ impl M31Var {
 
         for _ in 0..30 {
             let is_zero = cur.is_zero();
-            let is_not_zero = &M31Var::one(&cs) - &is_zero;
+            let is_not_zero = &M31Var::one(&cs) - &is_zero.0;
 
             cur = &cur - &is_not_zero;
             sum = &sum + &(&sum * &is_not_zero);
