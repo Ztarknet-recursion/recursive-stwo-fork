@@ -245,7 +245,7 @@ mod test {
             &proof,
         );
 
-        let cs = ConstraintSystemRef::new_plonk_with_poseidon_ref();
+        let cs = ConstraintSystemRef::new();
         let mut proof_var = PlonkWithPoseidonProofVar::new_witness(&cs, &proof);
 
         let fiat_shamir_results = FiatShamirResults::compute(

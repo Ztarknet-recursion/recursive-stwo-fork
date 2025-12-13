@@ -557,7 +557,7 @@ mod test {
             proof.verify();
         }
 
-        let cs = ConstraintSystemRef::new_plonk_with_poseidon_ref();
+        let cs = ConstraintSystemRef::new();
         let root = HashVar::new_witness(&cs, &proof.stark_proof.commitments[0].0);
         for proof in proofs.iter() {
             let mut proof_var = SinglePathMerkleProofVar::new(&cs, proof);
@@ -583,7 +583,7 @@ mod test {
             proof.verify();
         }
 
-        let cs = ConstraintSystemRef::new_plonk_with_poseidon_ref();
+        let cs = ConstraintSystemRef::new();
         let root = HashVar::new_witness(&cs, &proof.stark_proof.fri_proof.first_layer.commitment.0);
         for proof in first_layer_hints.merkle_proofs.iter() {
             let mut proof_var = SinglePairMerkleProofVar::new(&cs, proof);

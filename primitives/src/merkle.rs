@@ -205,7 +205,7 @@ mod test {
         let mut prng = SmallRng::seed_from_u64(0);
         let test: [M31; 25] = prng.gen();
 
-        let cs = ConstraintSystemRef::new_plonk_with_poseidon_ref();
+        let cs = ConstraintSystemRef::new();
         let mut test_var = vec![];
         for v in test.iter() {
             test_var.push(M31Var::new_constant(&cs, v));

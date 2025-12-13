@@ -23,7 +23,7 @@ pub enum ConstraintSystemType {
 pub struct ConstraintSystemRef(pub(crate) Rc<RefCell<PlonkWithPoseidonConstraintSystem>>);
 
 impl ConstraintSystemRef {
-    pub fn new_plonk_with_poseidon_ref() -> Self {
+    pub fn new() -> Self {
         Self(Rc::new(RefCell::new(
             PlonkWithPoseidonConstraintSystem::new(),
         )))

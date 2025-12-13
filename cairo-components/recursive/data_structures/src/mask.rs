@@ -133,7 +133,7 @@ mod tests {
 
     #[test]
     fn test_mask_table_var() {
-        let cs = ConstraintSystemRef::new_plonk_with_poseidon_ref();
+        let cs = ConstraintSystemRef::new();
 
         let manifest_dir = env!("CARGO_MANIFEST_DIR");
         let data_path = PathBuf::from(manifest_dir)

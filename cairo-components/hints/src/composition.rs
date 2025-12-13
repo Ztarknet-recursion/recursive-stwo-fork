@@ -5,7 +5,7 @@ use stwo::core::{
     vcs::poseidon31_merkle::Poseidon31MerkleHasher,
 };
 
-use crate::{update_evaluation_accumulator, CairoFiatShamirHints};
+use crate::CairoFiatShamirHints;
 
 pub struct CairoCompositionHints {}
 
@@ -21,116 +21,101 @@ impl CairoCompositionHints {
         let mut evaluation_accumulator = PointEvaluationAccumulator::new(*random_coeff);
 
         // opcodes
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.opcodes.add[0],
+        component_generator.opcodes.add[0].evaluate_constraint_quotients_at_point(
             oods_point,
             &proof.stark_proof.sampled_values,
+            &mut evaluation_accumulator,
         );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.opcodes.add_small[0],
+        component_generator.opcodes.add_small[0].evaluate_constraint_quotients_at_point(
             oods_point,
             &proof.stark_proof.sampled_values,
+            &mut evaluation_accumulator,
         );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.opcodes.add_ap[0],
+        component_generator.opcodes.add_ap[0].evaluate_constraint_quotients_at_point(
             oods_point,
             &proof.stark_proof.sampled_values,
+            &mut evaluation_accumulator,
         );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.opcodes.assert_eq[0],
+        component_generator.opcodes.assert_eq[0].evaluate_constraint_quotients_at_point(
             oods_point,
             &proof.stark_proof.sampled_values,
+            &mut evaluation_accumulator,
         );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.opcodes.assert_eq_imm[0],
+        component_generator.opcodes.assert_eq_imm[0].evaluate_constraint_quotients_at_point(
             oods_point,
             &proof.stark_proof.sampled_values,
+            &mut evaluation_accumulator,
         );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.opcodes.assert_eq_double_deref[0],
+        component_generator.opcodes.assert_eq_double_deref[0]
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        component_generator.opcodes.blake[0].evaluate_constraint_quotients_at_point(
             oods_point,
             &proof.stark_proof.sampled_values,
+            &mut evaluation_accumulator,
         );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.opcodes.blake[0],
+        component_generator.opcodes.call[0].evaluate_constraint_quotients_at_point(
             oods_point,
             &proof.stark_proof.sampled_values,
+            &mut evaluation_accumulator,
         );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.opcodes.call[0],
+        component_generator.opcodes.call_rel_imm[0].evaluate_constraint_quotients_at_point(
             oods_point,
             &proof.stark_proof.sampled_values,
+            &mut evaluation_accumulator,
         );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.opcodes.call_rel_imm[0],
+        component_generator.opcodes.jnz[0].evaluate_constraint_quotients_at_point(
             oods_point,
             &proof.stark_proof.sampled_values,
+            &mut evaluation_accumulator,
         );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.opcodes.jnz[0],
+        component_generator.opcodes.jnz_taken[0].evaluate_constraint_quotients_at_point(
             oods_point,
             &proof.stark_proof.sampled_values,
+            &mut evaluation_accumulator,
         );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.opcodes.jnz_taken[0],
+        component_generator.opcodes.jump_rel[0].evaluate_constraint_quotients_at_point(
             oods_point,
             &proof.stark_proof.sampled_values,
+            &mut evaluation_accumulator,
         );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.opcodes.jump_rel[0],
+        component_generator.opcodes.jump_rel_imm[0].evaluate_constraint_quotients_at_point(
             oods_point,
             &proof.stark_proof.sampled_values,
+            &mut evaluation_accumulator,
         );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.opcodes.jump_rel_imm[0],
+        component_generator.opcodes.mul[0].evaluate_constraint_quotients_at_point(
             oods_point,
             &proof.stark_proof.sampled_values,
+            &mut evaluation_accumulator,
         );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.opcodes.mul[0],
+        component_generator.opcodes.mul_small[0].evaluate_constraint_quotients_at_point(
             oods_point,
             &proof.stark_proof.sampled_values,
+            &mut evaluation_accumulator,
         );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.opcodes.mul_small[0],
+        component_generator.opcodes.qm31[0].evaluate_constraint_quotients_at_point(
             oods_point,
             &proof.stark_proof.sampled_values,
+            &mut evaluation_accumulator,
         );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.opcodes.qm31[0],
+        component_generator.opcodes.ret[0].evaluate_constraint_quotients_at_point(
             oods_point,
             &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
             &mut evaluation_accumulator,
-            &component_generator.opcodes.ret[0],
-            oods_point,
-            &proof.stark_proof.sampled_values,
         );
 
         // verify_instruction
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.verify_instruction,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
+        component_generator
+            .verify_instruction
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
 
         // blake_context
         let blake_context_components = &component_generator
@@ -138,36 +123,41 @@ impl CairoCompositionHints {
             .components
             .as_ref()
             .unwrap();
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &blake_context_components.blake_round,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &blake_context_components.blake_g,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &blake_context_components.blake_sigma,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &blake_context_components.triple_xor_32,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &blake_context_components.verify_bitwise_xor_12,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
+        blake_context_components
+            .blake_round
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        blake_context_components
+            .blake_g
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        blake_context_components
+            .blake_sigma
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        blake_context_components
+            .triple_xor_32
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        blake_context_components
+            .verify_bitwise_xor_12
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
 
         // builtins
         let range_check_128_builtin = &component_generator
@@ -175,242 +165,306 @@ impl CairoCompositionHints {
             .range_check_128_builtin
             .as_ref()
             .unwrap();
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &range_check_128_builtin,
+        range_check_128_builtin.evaluate_constraint_quotients_at_point(
             oods_point,
             &proof.stark_proof.sampled_values,
+            &mut evaluation_accumulator,
         );
 
         // memory_address_to_id
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.memory_address_to_id,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
+        component_generator
+            .memory_address_to_id
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
 
         // memory_id_to_value
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.memory_id_to_value.0[0],
+        component_generator.memory_id_to_value.0[0].evaluate_constraint_quotients_at_point(
             oods_point,
             &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
             &mut evaluation_accumulator,
-            &component_generator.memory_id_to_value.1,
-            oods_point,
-            &proof.stark_proof.sampled_values,
         );
+        component_generator
+            .memory_id_to_value
+            .1
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
 
         // range_checks
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.range_checks.rc_6,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.range_checks.rc_8,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.range_checks.rc_11,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.range_checks.rc_12,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.range_checks.rc_18,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.range_checks.rc_18_b,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.range_checks.rc_20,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.range_checks.rc_20_b,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.range_checks.rc_20_c,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.range_checks.rc_20_d,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.range_checks.rc_20_e,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.range_checks.rc_20_f,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.range_checks.rc_20_g,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.range_checks.rc_20_h,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.range_checks.rc_4_3,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.range_checks.rc_4_4,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.range_checks.rc_5_4,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.range_checks.rc_9_9,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.range_checks.rc_9_9_b,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.range_checks.rc_9_9_c,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.range_checks.rc_9_9_d,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.range_checks.rc_9_9_e,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.range_checks.rc_9_9_f,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.range_checks.rc_9_9_g,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.range_checks.rc_9_9_h,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.range_checks.rc_7_2_5,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.range_checks.rc_3_6_6_3,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.range_checks.rc_4_4_4_4,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.range_checks.rc_3_3_3_3_3,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
+        component_generator
+            .range_checks
+            .rc_6
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        component_generator
+            .range_checks
+            .rc_8
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        component_generator
+            .range_checks
+            .rc_11
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        component_generator
+            .range_checks
+            .rc_12
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        component_generator
+            .range_checks
+            .rc_18
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        component_generator
+            .range_checks
+            .rc_18_b
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        component_generator
+            .range_checks
+            .rc_20
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        component_generator
+            .range_checks
+            .rc_20_b
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        component_generator
+            .range_checks
+            .rc_20_c
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        component_generator
+            .range_checks
+            .rc_20_d
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        component_generator
+            .range_checks
+            .rc_20_e
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        component_generator
+            .range_checks
+            .rc_20_f
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        component_generator
+            .range_checks
+            .rc_20_g
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        component_generator
+            .range_checks
+            .rc_20_h
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        component_generator
+            .range_checks
+            .rc_4_3
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        component_generator
+            .range_checks
+            .rc_4_4
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        component_generator
+            .range_checks
+            .rc_5_4
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        component_generator
+            .range_checks
+            .rc_9_9
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        component_generator
+            .range_checks
+            .rc_9_9_b
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        component_generator
+            .range_checks
+            .rc_9_9_c
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        component_generator
+            .range_checks
+            .rc_9_9_d
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        component_generator
+            .range_checks
+            .rc_9_9_e
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        component_generator
+            .range_checks
+            .rc_9_9_f
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        component_generator
+            .range_checks
+            .rc_9_9_g
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        component_generator
+            .range_checks
+            .rc_9_9_h
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        component_generator
+            .range_checks
+            .rc_7_2_5
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        component_generator
+            .range_checks
+            .rc_3_6_6_3
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        component_generator
+            .range_checks
+            .rc_4_4_4_4
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        component_generator
+            .range_checks
+            .rc_3_3_3_3_3
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
 
         // verify_bitwise_xor
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.verify_bitwise_xor_4,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.verify_bitwise_xor_7,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.verify_bitwise_xor_8,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.verify_bitwise_xor_8_b,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
-        update_evaluation_accumulator(
-            &mut evaluation_accumulator,
-            &component_generator.verify_bitwise_xor_9,
-            oods_point,
-            &proof.stark_proof.sampled_values,
-        );
+        component_generator
+            .verify_bitwise_xor_4
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        component_generator
+            .verify_bitwise_xor_7
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        component_generator
+            .verify_bitwise_xor_8
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        component_generator
+            .verify_bitwise_xor_8_b
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
+        component_generator
+            .verify_bitwise_xor_9
+            .evaluate_constraint_quotients_at_point(
+                oods_point,
+                &proof.stark_proof.sampled_values,
+                &mut evaluation_accumulator,
+            );
 
         let res = evaluation_accumulator.finalize();
         println!("current accumulated result: {:?}", res);
@@ -454,43 +508,6 @@ impl CairoCompositionHints {
         };
 
         println!("composition_oods_eval: {:?}", composition_oods_eval);
-
-        {
-            let mut evaluation_accumulator = PointEvaluationAccumulator::new(*random_coeff);
-            component_generator.opcodes.add[0].evaluate_constraint_quotients_at_point(
-                oods_point,
-                &proof.stark_proof.sampled_values,
-                &mut evaluation_accumulator,
-            );
-            component_generator.opcodes.add_small[0].evaluate_constraint_quotients_at_point(
-                oods_point,
-                &proof.stark_proof.sampled_values,
-                &mut evaluation_accumulator,
-            );
-            component_generator.opcodes.add_ap[0].evaluate_constraint_quotients_at_point(
-                oods_point,
-                &proof.stark_proof.sampled_values,
-                &mut evaluation_accumulator,
-            );
-            component_generator.opcodes.assert_eq[0].evaluate_constraint_quotients_at_point(
-                oods_point,
-                &proof.stark_proof.sampled_values,
-                &mut evaluation_accumulator,
-            );
-            component_generator.opcodes.assert_eq_imm[0].evaluate_constraint_quotients_at_point(
-                oods_point,
-                &proof.stark_proof.sampled_values,
-                &mut evaluation_accumulator,
-            );
-            component_generator.opcodes.assert_eq_double_deref[0]
-                .evaluate_constraint_quotients_at_point(
-                    oods_point,
-                    &proof.stark_proof.sampled_values,
-                    &mut evaluation_accumulator,
-                );
-            let res = evaluation_accumulator.finalize();
-            println!("current accumulated result: {:?}", res);
-        }
 
         assert_eq!(
             composition_oods_eval,

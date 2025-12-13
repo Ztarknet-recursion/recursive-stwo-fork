@@ -220,7 +220,7 @@ mod tests {
 
     #[test]
     fn test_exp2() {
-        let cs = ConstraintSystemRef::new_plonk_with_poseidon_ref();
+        let cs = ConstraintSystemRef::new();
         let m31 = M31Var::new_witness(&cs, &M31::from(30));
         let result = m31.exp2();
         result.equalverify(&M31Var::new_constant(&cs, &M31::from(1 << 30)));

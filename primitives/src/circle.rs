@@ -235,6 +235,22 @@ impl Add<&CirclePoint<M31>> for &CirclePointQM31Var {
     }
 }
 
+impl Add<&CirclePointM31Var> for &CirclePointQM31Var {
+    type Output = CirclePointQM31Var;
+
+    fn add(self, rhs: &CirclePointM31Var) -> Self::Output {
+        let x1x2 = &self.x * &rhs.x;
+        let y1y2 = &self.y * &rhs.y;
+        let x1y2 = &self.x * &rhs.y;
+        let y1x2 = &self.y * &rhs.x;
+
+        let new_x = &x1x2 - &y1y2;
+        let new_y = &x1y2 + &y1x2;
+
+        CirclePointQM31Var { x: new_x, y: new_y }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::BitsVar;
@@ -253,7 +269,7 @@ mod test {
         let a = circle_domain.at(bit_reverse_index(40, 16));
         let b = circle_domain.at(bit_reverse_index(41, 16));
 
-        let cs = ConstraintSystemRef::new_plonk_with_poseidon_ref();
+        let cs = ConstraintSystemRef::new();
 
         let a_index = M31Var::new_witness(&cs, &M31::from(40));
         let b_index = M31Var::new_witness(&cs, &M31::from(41));

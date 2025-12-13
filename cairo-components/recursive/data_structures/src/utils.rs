@@ -36,7 +36,7 @@ mod tests {
             *val = rng.next_u32();
         }
 
-        let cs = ConstraintSystemRef::new_plonk_with_poseidon_ref();
+        let cs = ConstraintSystemRef::new();
         let value_vars: [BitIntVar<32>; 8] =
             std::array::from_fn(|i| BitIntVar::<32>::new_witness(&cs, &(random_u32s[i] as u64)));
 

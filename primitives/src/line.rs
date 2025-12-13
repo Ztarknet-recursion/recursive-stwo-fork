@@ -92,7 +92,7 @@ mod test {
         let line_poly = LinePoly::new(coeffs);
         let expected = line_poly.eval_at_point(point.x.into());
 
-        let cs = ConstraintSystemRef::new_plonk_with_poseidon_ref();
+        let cs = ConstraintSystemRef::new();
         let line_poly_var = LinePolyVar::new_witness(&cs, &line_poly);
         let res = line_poly_var.eval_at_point(&M31Var::new_witness(&cs, &point.x));
 

@@ -21,6 +21,8 @@ itertools = "0.14.0"
 indexmap = "2.7.0"
 cairo-air = { git = "https://github.com/Ztarknet-recursion/stwo-cairo-fork" }
 stwo-cairo-common = { git = "https://github.com/Ztarknet-recursion/stwo-cairo-fork" }
+stwo-cairo-serialize = { git = "https://github.com/Ztarknet-recursion/stwo-cairo-fork" }
+starknet-ff = "0.3.7"
 
 [profile.release]
 opt-level = 3

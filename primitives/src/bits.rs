@@ -198,7 +198,7 @@ mod tests {
 
     #[test]
     fn test_is_greater_than() {
-        let cs = ConstraintSystemRef::new_plonk_with_poseidon_ref();
+        let cs = ConstraintSystemRef::new();
 
         // Test: 5 > 3 (should return true)
         let a_m31 = M31Var::new_witness(&cs, &M31::from(5));

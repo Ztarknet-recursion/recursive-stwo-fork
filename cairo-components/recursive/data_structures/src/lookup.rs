@@ -84,6 +84,7 @@ pub trait RelationVar: Relation<WrappedQM31Var, WrappedQM31Var> {
 // Macro to generate lookup element structs with draw method
 macro_rules! lookup_element_var {
     ($name:ident, $n:expr) => {
+        #[derive(Debug, Clone)]
         pub struct $name(pub LookupElementsVar);
 
         impl $name {

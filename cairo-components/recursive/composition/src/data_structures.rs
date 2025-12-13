@@ -1,20 +1,46 @@
 use std::collections::{HashMap, HashSet};
 use std::ops::Mul;
+use std::ops::Neg;
+use std::sync::OnceLock;
 
+use cairo_air::PreProcessedTraceVariant;
 use cairo_plonk_dsl_data_structures::data_structures::LogSizeVar;
 use cairo_plonk_dsl_data_structures::evaluator::PointEvaluationAccumulatorVar;
-use circle_plonk_dsl_constraint_system::var::Var;
+use circle_plonk_dsl_constraint_system::var::{AllocVar, Var};
 use circle_plonk_dsl_constraint_system::ConstraintSystemRef;
 use circle_plonk_dsl_primitives::fields::WrappedQM31Var;
-use circle_plonk_dsl_primitives::QM31Var;
+use circle_plonk_dsl_primitives::oblivious_map::SelectVar;
+use circle_plonk_dsl_primitives::{BitVar, M31Var, QM31Var};
 use num_traits::Zero;
+use stwo::core::fields::m31::M31;
 use stwo::core::fields::qm31::{QM31, SECURE_EXTENSION_DEGREE};
 use stwo::core::pcs::TreeVec;
 use stwo::core::{ColumnVec, Fraction};
-use stwo_constraint_framework::{EvalAtRow, Relation, RelationEntry, INTERACTION_TRACE_IDX};
+use stwo_cairo_common::preprocessed_columns::preprocessed_trace::{
+    PreProcessedColumn, Seq, MAX_SEQUENCE_LOG_SIZE,
+};
+use stwo_cairo_common::prover_types::simd::LOG_N_LANES;
+use stwo_constraint_framework::preprocessed_columns::PreProcessedColumnId;
+use stwo_constraint_framework::{
+    EvalAtRow, Relation, RelationEntry, INTERACTION_TRACE_IDX, PREPROCESSED_TRACE_IDX,
+};
 
-// TODO: LogupAtRowVar currently takes log_size as a constant (u32), but this would not be the case for Cairo
-// and needs to be changed to use a variable instead of a constant.
+pub static SEQ_PREPROCESSED_TRACE_MAP: OnceLock<HashMap<PreProcessedColumnId, usize>> =
+    OnceLock::new();
+
+fn initialize_seq_preprocessed_trace_map() -> HashMap<PreProcessedColumnId, usize> {
+    let ids = PreProcessedTraceVariant::CanonicalWithoutPedersen
+        .to_preprocessed_trace()
+        .ids();
+    let map = ids
+        .iter()
+        .enumerate()
+        .filter(|(_, id)| id.id.to_string().starts_with("seq_"))
+        .map(|(i, id)| (id.clone(), i))
+        .collect();
+    map
+}
+
 pub struct LogupAtRowVar {
     pub interaction: usize,
     pub cumsum_shift: WrappedQM31Var,
@@ -47,24 +73,33 @@ pub struct PointEvaluatorVar<'a> {
     pub denom_inverse: QM31Var,
     pub logup: LogupAtRowVar,
     pub col_index: Vec<usize>,
+    pub seq_franking: bool,
+    pub preprocessed_mask: &'a ColumnVec<Vec<WrappedQM31Var>>,
+    pub is_preprocessed_trace_present: &'a [BitVar],
 }
 
 impl<'a> PointEvaluatorVar<'a> {
     pub fn new(
         mask: TreeVec<ColumnVec<&'a Vec<WrappedQM31Var>>>,
         evaluation_accumulator: &'a mut PointEvaluationAccumulatorVar,
-        denom_inverse: QM31Var,
-        log_size: LogSizeVar,
-        total_sum: QM31Var,
+        denom_inverse: &QM31Var,
+        log_size: &LogSizeVar,
+        total_sum: &QM31Var,
+        seq_franking: bool,
+        preprocessed_mask: &'a ColumnVec<Vec<WrappedQM31Var>>,
+        is_preprocessed_trace_present: &'a [BitVar],
     ) -> Self {
         let col_index = vec![0; mask.len()];
-        let logup = LogupAtRowVar::new(INTERACTION_TRACE_IDX, &total_sum, &log_size);
+        let logup = LogupAtRowVar::new(INTERACTION_TRACE_IDX, total_sum, log_size);
         Self {
             mask,
             evaluation_accumulator,
-            denom_inverse,
+            denom_inverse: denom_inverse.clone(),
             logup,
             col_index,
+            seq_franking,
+            preprocessed_mask,
+            is_preprocessed_trace_present,
         }
     }
 }
@@ -72,6 +107,50 @@ impl<'a> PointEvaluatorVar<'a> {
 impl EvalAtRow for PointEvaluatorVar<'_> {
     type F = WrappedQM31Var;
     type EF = WrappedQM31Var;
+
+    fn get_preprocessed_column(&mut self, column: PreProcessedColumnId) -> Self::F {
+        if self.seq_franking {
+            if column.id.to_string().starts_with("seq_") && self.seq_franking {
+                let [mask_item_for_check] = self.next_interaction_mask(PREPROCESSED_TRACE_IDX, [0]);
+                let mask_item_for_check = match mask_item_for_check {
+                    WrappedQM31Var::Constant(value) => value,
+                    WrappedQM31Var::Allocated(variable) => variable.value(),
+                };
+                // cannot use mask_item_for_check in the constraint system because its location is dynamic
+
+                let seq_preprocessed_trace_map =
+                    SEQ_PREPROCESSED_TRACE_MAP.get_or_init(initialize_seq_preprocessed_trace_map);
+
+                let log_size = &self.logup.log_size.m31;
+                let mut session = QM31Var::select_start(&self.cs());
+                for i in LOG_N_LANES..=MAX_SEQUENCE_LOG_SIZE {
+                    let loc = seq_preprocessed_trace_map.get(&Seq::new(i).id()).unwrap();
+                    let bit = log_size.is_eq(&M31Var::new_constant(&self.cs(), &M31::from(i)));
+
+                    // if bit is true, we require that its preprocessed trace is present
+                    // => bit * is_preprocessed_trace_present + !bit = one
+                    let is_preprocessed_trace_present = &self.is_preprocessed_trace_present[*loc];
+                    let constraint = &(&bit & is_preprocessed_trace_present) | &bit.neg();
+                    constraint.equalverify(&BitVar::new_true(&self.cs()));
+
+                    QM31Var::select_add(
+                        &mut session,
+                        &self.preprocessed_mask[*loc][0].unwrap(&self.cs()),
+                        &bit,
+                    );
+                }
+                let res = QM31Var::select_end(session);
+                assert_eq!(res.value(), mask_item_for_check);
+                WrappedQM31Var::wrap(res)
+            } else {
+                let [mask_item] = self.next_interaction_mask(PREPROCESSED_TRACE_IDX, [0]);
+                mask_item
+            }
+        } else {
+            let [mask_item] = self.next_interaction_mask(PREPROCESSED_TRACE_IDX, [0]);
+            mask_item
+        }
+    }
 
     fn next_interaction_mask<const N: usize>(
         &mut self,

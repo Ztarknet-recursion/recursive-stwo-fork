@@ -5,7 +5,7 @@ use num_traits::{One, Zero};
 use std::ops::{Add, Mul, Neg, Sub};
 use stwo::core::fields::cm31::CM31;
 use stwo::core::fields::m31::M31;
-use stwo::core::fields::qm31::QM31;
+use stwo::core::fields::qm31::{QM31, SECURE_EXTENSION_DEGREE};
 use stwo::core::fields::FieldExpOps;
 
 #[derive(Debug, Clone)]
@@ -468,6 +468,14 @@ impl QM31Var {
     pub fn shift_by_ij(&self) -> QM31Var {
         self.shift_by_i().shift_by_j()
     }
+
+    pub fn from_partial_evals(evals: &[Self; SECURE_EXTENSION_DEGREE]) -> Self {
+        let mut res = evals[0].clone();
+        res = &res + &evals[1].shift_by_i();
+        res = &res + &evals[2].shift_by_j();
+        res = &res + &evals[3].shift_by_ij();
+        res
+    }
 }
 
 #[cfg(test)]
@@ -499,7 +507,7 @@ mod test {
         let exp = 100u128;
         let b = a.pow(exp);
 
-        let cs = ConstraintSystemRef::new_plonk_with_poseidon_ref();
+        let cs = ConstraintSystemRef::new();
 
         let a_var = QM31Var::new_witness(&cs, &a);
         let b_var = QM31Var::new_witness(&cs, &b);

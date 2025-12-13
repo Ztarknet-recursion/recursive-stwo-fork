@@ -8,7 +8,8 @@ use cairo_plonk_dsl_data_structures::{
 use cairo_plonk_dsl_hints::CairoFiatShamirHints;
 use circle_plonk_dsl_constraint_system::var::{AllocVar, Var};
 use circle_plonk_dsl_primitives::{
-    BitVar, BitsVar, ChannelVar, CirclePointQM31Var, M31Var, Poseidon2HalfVar, QM31Var,
+    channel::ConditionalChannelMixer, BitVar, BitsVar, ChannelVar, CirclePointQM31Var, M31Var,
+    Poseidon2HalfVar, QM31Var,
 };
 use stwo::core::fields::m31::M31;
 use stwo_cairo_common::memory::LARGE_MEMORY_VALUE_ID_BASE;
@@ -17,6 +18,7 @@ pub struct CairoFiatShamirResults {
     pub oods_point: CirclePointQM31Var,
     pub random_coeff: QM31Var,
     pub after_sampled_values_random_coeff: QM31Var,
+    pub interaction_elements: CairoInteractionElementsVar,
 }
 
 impl CairoFiatShamirResults {
@@ -47,14 +49,11 @@ impl CairoFiatShamirResults {
         // Draw OODS point.
         let oods_point = CirclePointQM31Var::from_channel(&mut channel);
 
-        let sampled_values_flattened = proof.stark_proof.sampled_values.clone().flatten_cols();
-        for chunk in sampled_values_flattened.chunks(2) {
-            if chunk.len() == 1 {
-                channel.mix_one_felt(&chunk[0]);
-            } else {
-                channel.mix_two_felts(&chunk[0], &chunk[1]);
-            }
-        }
+        let channel_mixer = ConditionalChannelMixer::new(channel);
+        channel = channel_mixer.mix(
+            &proof.stark_proof.sampled_values.clone().flatten_cols(),
+            &proof.stark_proof.is_preprocessed_trace_present,
+        );
         let after_sampled_values_random_coeff = channel.draw_felts()[0].clone();
 
         println!(
@@ -79,6 +78,7 @@ impl CairoFiatShamirResults {
             oods_point,
             random_coeff,
             after_sampled_values_random_coeff,
+            interaction_elements,
         }
     }
 
@@ -200,7 +200,7 @@ mod tests {
 
     #[test]
     fn test_fiat_shamir() {
-        let cs = ConstraintSystemRef::new_plonk_with_poseidon_ref();
+        let cs = ConstraintSystemRef::new();
 
         let manifest_dir = env!("CARGO_MANIFEST_DIR");
         let data_path = PathBuf::from(manifest_dir)

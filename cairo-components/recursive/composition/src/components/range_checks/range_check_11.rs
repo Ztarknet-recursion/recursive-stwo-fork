@@ -1,0 +1,27 @@
+// This file was created by the AIR team.
+
+use crate::components::prelude::*;
+
+pub const N_TRACE_COLUMNS: usize = 1;
+pub const LOG_SIZE: u32 = 11;
+pub struct Component {
+    pub range_check_11_lookup_elements: RangeCheck11Var,
+}
+
+impl ComponentVar for Component {
+    fn evaluate<E: EvalAtRow<F = WrappedQM31Var, EF = WrappedQM31Var>>(&self, mut eval: E) -> E {
+        let seq_11 = eval.get_preprocessed_column(PreProcessedColumnId {
+            id: "seq_11".to_owned(),
+        });
+        let multiplicity = eval.next_trace_mask();
+
+        eval.add_to_relation(RelationEntry::new(
+            &self.range_check_11_lookup_elements,
+            -E::EF::from(multiplicity),
+            std::slice::from_ref(&seq_11),
+        ));
+
+        eval.finalize_logup_in_pairs();
+        eval
+    }
+}
