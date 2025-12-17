@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::ops::Neg;
 
 use cairo_air::verifier::INTERACTION_POW_BITS;
 use cairo_plonk_dsl_data_structures::{
@@ -12,13 +13,18 @@ use circle_plonk_dsl_primitives::{
     Poseidon2HalfVar, QM31Var,
 };
 use stwo::core::fields::m31::M31;
-use stwo_cairo_common::memory::LARGE_MEMORY_VALUE_ID_BASE;
+use stwo_cairo_common::{
+    memory::LARGE_MEMORY_VALUE_ID_BASE,
+    preprocessed_columns::preprocessed_trace::MAX_SEQUENCE_LOG_SIZE,
+};
 
 pub struct CairoFiatShamirResults {
     pub oods_point: CirclePointQM31Var,
     pub random_coeff: QM31Var,
     pub after_sampled_values_random_coeff: QM31Var,
     pub interaction_elements: CairoInteractionElementsVar,
+    pub max_log_size: M31Var,
+    pub queries: Vec<BitsVar>,
 }
 
 impl CairoFiatShamirResults {
@@ -57,11 +63,6 @@ impl CairoFiatShamirResults {
         let after_sampled_values_random_coeff = channel.draw_felts()[0].clone();
 
         println!(
-            "channel after drawing another random coeff: {:?}",
-            channel.digest.value()
-        );
-
-        println!(
             "size of constraint system so far: {:?} {:?}",
             cs.num_plonk_rows(),
             cs.num_poseidon_invocations()
@@ -74,11 +75,110 @@ impl CairoFiatShamirResults {
         );
         lookup_sum.equalverify(&QM31Var::zero(&cs));
 
+        let max_preprocessed_trace_log_size = proof.stark_proof.max_preprocessed_trace_log_size();
+        let max_trace_and_interaction_log_size = proof.claim.max_trace_and_interaction_log_size();
+        println!(
+            "max_preprocessed_trace_log_size: {:?}",
+            max_preprocessed_trace_log_size.value
+        );
+        println!(
+            "max_trace_and_interaction_log_size: {:?}",
+            max_trace_and_interaction_log_size.value
+        );
+
+        let max_log_size =
+            max_preprocessed_trace_log_size.max(&max_trace_and_interaction_log_size, 5);
+        let composition_log_size = &max_log_size + &M31Var::one(&cs);
+
+        // mix the FRI first layer commitment
+        channel.mix_root(&proof.stark_proof.fri_proof.first_layer.commitment);
+        let _first_layer_alpha = channel.draw_felts()[0].clone();
+
+        // total number of layers = composition_log_size - 1 (first layer is after one reduction) = max_log_size
+        let num_inner_layers = &max_log_size - &M31Var::one(&cs);
+        let mut inner_layer_alphas = vec![];
+        let mut remaining_num_inner_layers = num_inner_layers.clone();
+        for i in 0..(MAX_SEQUENCE_LOG_SIZE - 1) as usize {
+            let is_this_layer_present = remaining_num_inner_layers.is_zero().neg();
+            remaining_num_inner_layers = &remaining_num_inner_layers - &is_this_layer_present.0;
+
+            let existing_channel = channel.digest.to_qm31();
+
+            channel.mix_root(&proof.stark_proof.fri_proof.inner_layers[i].commitment);
+            let inner_layer_alpha = channel.draw_felts()[0].clone();
+            inner_layer_alphas.push(inner_layer_alpha);
+
+            let candidate_channel = channel.digest.to_qm31();
+
+            let new_digest = [
+                QM31Var::select(
+                    &existing_channel[0],
+                    &candidate_channel[0],
+                    &is_this_layer_present,
+                ),
+                QM31Var::select(
+                    &existing_channel[1],
+                    &candidate_channel[1],
+                    &is_this_layer_present,
+                ),
+            ];
+            channel.digest = Poseidon2HalfVar::from_qm31(&new_digest[0], &new_digest[1]);
+        }
+
+        channel.mix_one_felt(&proof.stark_proof.fri_proof.last_layer_constant);
+
+        println!("max_log_size: {:?}", max_log_size.value);
+        println!("composition_log_size: {:?}", composition_log_size.value);
+
+        proof.stark_proof.proof_of_work.mix_into(&mut channel);
+
+        let lower_bits = BitsVar::from_m31(&channel.digest.to_qm31()[0].decompose_m31()[0], 31)
+            .compose_range(0..26 as usize); // hardcoded pow_bits of 26
+        lower_bits.equalverify(&M31Var::zero(&cs));
+
+        let pcs_config = &fiat_shamir_hints.pcs_config;
+        let mut raw_queries = Vec::with_capacity(pcs_config.fri_config.n_queries);
+        let mut draw_queries_felts =
+            Vec::with_capacity(pcs_config.fri_config.n_queries.div_ceil(4));
+        for _ in 0..pcs_config.fri_config.n_queries.div_ceil(4) {
+            let [a, b] = channel.draw_felts();
+            draw_queries_felts.push(a);
+            draw_queries_felts.push(b);
+        }
+        for felt in draw_queries_felts.iter() {
+            raw_queries.extend_from_slice(&felt.decompose_m31());
+        }
+        raw_queries.truncate(pcs_config.fri_config.n_queries);
+
+        let mut mask = vec![];
+        let mut cur = composition_log_size.clone();
+        for _ in 0..31 {
+            let is_cur_nonzero = cur.is_zero().neg();
+            cur = &cur - &is_cur_nonzero.0;
+            mask.push(is_cur_nonzero);
+        }
+
+        let mut queries = vec![];
+        for i in 0..raw_queries.len() {
+            let mut bits = BitsVar::from_m31(&raw_queries[i], 31);
+            for j in 0..31 {
+                bits.0[j] = &bits.0[j] & &mask[j];
+            }
+            queries.push(bits);
+        }
+
+        println!(
+            "channel after sampling queries: {:?}",
+            channel.digest.value()
+        );
+
         Self {
             oods_point,
             random_coeff,
             after_sampled_values_random_coeff,
             interaction_elements,
+            max_log_size: max_trace_and_interaction_log_size,
+            queries,
         }
     }
 

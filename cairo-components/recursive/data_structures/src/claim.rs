@@ -162,6 +162,28 @@ impl OpcodeClaimVar {
         accumulate_component!(qm_31_add_mul_opcode, self.qm31, relation_uses);
         accumulate_component!(ret_opcode, self.ret, relation_uses);
     }
+
+    pub fn max_log_size(&self) -> M31Var {
+        let mut max = self.add.m31.clone();
+        max = max.max(&self.add_small.m31, 5);
+        max = max.max(&self.add_ap.m31, 5);
+        max = max.max(&self.assert_eq.m31, 5);
+        max = max.max(&self.assert_eq_imm.m31, 5);
+        max = max.max(&self.assert_eq_double_deref.m31, 5);
+        max = max.max(&self.blake.m31, 5);
+        max = max.max(&self.call.m31, 5);
+        max = max.max(&self.call_rel_imm.m31, 5);
+        max = max.max(&self.jnz.m31, 5);
+        max = max.max(&self.jnz_taken.m31, 5);
+        max = max.max(&self.jump_rel.m31, 5);
+        max = max.max(&self.jump_rel_imm.m31, 5);
+        max = max.max(&self.mul.m31, 5);
+        max = max.max(&self.mul_small.m31, 5);
+        max = max.max(&self.qm31.m31, 5);
+        max = max.max(&self.ret.m31, 5);
+
+        max
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -205,6 +227,14 @@ impl BlakeContextClaimVar {
         accumulate_component!(blake_round, self.blake_round, relation_uses);
         accumulate_component!(blake_g, self.blake_g, relation_uses);
         accumulate_component!(triple_xor_32, self.triple_xor_32, relation_uses);
+    }
+
+    pub fn max_log_size(&self) -> M31Var {
+        let mut max = self.blake_round.m31.clone();
+        max = max.max(&self.blake_g.m31, 5);
+        max = max.max(&self.triple_xor_32.m31, 5);
+
+        max
     }
 }
 
@@ -250,6 +280,10 @@ impl BuiltinsClaimVar {
         self.range_check_128_builtin_log_size.mix_into(channel);
         self.range_check_builtin_segment_start.mix_into(channel);
     }
+
+    pub fn max_log_size(&self) -> M31Var {
+        self.range_check_128_builtin_log_size.m31.clone()
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -281,6 +315,13 @@ impl MemoryIdToBigClaimVar {
     pub fn mix_into(&self, channel: &mut ChannelVar) {
         self.big_log_size.mix_into(channel);
         self.small_log_size.mix_into(channel);
+    }
+
+    pub fn max_log_size(&self) -> M31Var {
+        let mut max = self.big_log_size.m31.clone();
+        max = max.max(&self.small_log_size.m31, 5);
+
+        max
     }
 }
 
@@ -363,5 +404,15 @@ impl CairoClaimVar {
             let new = m31_var.exp2().mul_constant(M31::from(entry.uses as u32));
             relation_uses.insert(entry.relation_id, cur.add_assert_no_overflow(&new));
         }
+    }
+
+    pub fn max_trace_and_interaction_log_size(&self) -> M31Var {
+        let mut max = self.opcode_claim.max_log_size();
+        max = max.max(&self.verify_instruction.m31, 5);
+        max = max.max(&self.blake_context.max_log_size(), 5);
+        max = max.max(&self.builtins.max_log_size(), 5);
+        max = max.max(&self.memory_address_to_id.m31, 5);
+        max = max.max(&self.memory_id_to_value.max_log_size(), 5);
+        max
     }
 }

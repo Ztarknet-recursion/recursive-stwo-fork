@@ -1,4 +1,4 @@
-use crate::{BitVar, M31Var, QM31Var};
+use crate::{BitVar, ChannelVar, M31Var, Poseidon2HalfVar, QM31Var};
 use circle_plonk_dsl_constraint_system::{
     var::{AllocVar, Var},
     ConstraintSystemRef,
@@ -117,5 +117,27 @@ impl<T: SelectVar> SelectVar for (T, T) {
 
     fn select_end(session: Self::SelectSession) -> Self::Output {
         (T::select_end(session.0), T::select_end(session.1))
+    }
+}
+
+impl SelectVar for ChannelVar {
+    type SelectSession = [QM31Var; 2];
+    type Output = ChannelVar;
+
+    fn select_start(cs: &ConstraintSystemRef) -> Self::SelectSession {
+        [QM31Var::zero(&cs), QM31Var::zero(&cs)]
+    }
+
+    fn select_add(session: &mut Self::SelectSession, new: &Self, bit: &BitVar) {
+        let new_qm31 = new.digest.to_qm31();
+        session[0] = QM31Var::select(&session[0], &new_qm31[0], bit);
+        session[1] = QM31Var::select(&session[1], &new_qm31[1], bit);
+    }
+
+    fn select_end(session: Self::SelectSession) -> Self::Output {
+        ChannelVar {
+            digest: Poseidon2HalfVar::from_qm31(&session[0], &session[1]),
+            n_sent: 0,
+        }
     }
 }

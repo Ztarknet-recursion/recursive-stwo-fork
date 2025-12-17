@@ -17,6 +17,7 @@ pub mod circle;
 pub mod fields;
 pub mod line;
 pub mod merkle;
+pub mod option;
 pub mod query;
 
 // Poseidon31 module

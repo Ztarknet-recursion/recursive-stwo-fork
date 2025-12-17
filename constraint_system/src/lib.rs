@@ -1,6 +1,7 @@
 use crate::var::AllocationMode;
 use plonk_with_poseidon::PlonkWithPoseidonConstraintSystem;
 use std::cell::RefCell;
+use std::fmt::Debug;
 use std::rc::Rc;
 use stwo::core::fields::m31::M31;
 use stwo::core::fields::qm31::QM31;
@@ -19,8 +20,14 @@ pub enum ConstraintSystemType {
 
 /// A shared reference to a constraint system that can be stored in high level
 /// variables.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct ConstraintSystemRef(pub(crate) Rc<RefCell<PlonkWithPoseidonConstraintSystem>>);
+
+impl Debug for ConstraintSystemRef {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "ConstraintSystemRef")
+    }
+}
 
 impl ConstraintSystemRef {
     pub fn new() -> Self {

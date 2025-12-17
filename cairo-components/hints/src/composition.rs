@@ -467,7 +467,6 @@ impl CairoCompositionHints {
             );
 
         let res = evaluation_accumulator.finalize();
-        println!("current accumulated result: {:?}", res);
 
         // Calculate composition OODS evaluation
         let components_vec = component_generator.components();
@@ -506,9 +505,6 @@ impl CairoCompositionHints {
                     .x
                     * right_eval
         };
-
-        println!("composition_oods_eval: {:?}", composition_oods_eval);
-
         assert_eq!(
             composition_oods_eval,
             components.eval_composition_polynomial_at_point(
@@ -517,6 +513,7 @@ impl CairoCompositionHints {
                 *random_coeff,
             )
         );
+        assert_eq!(res, composition_oods_eval);
 
         Self {}
     }

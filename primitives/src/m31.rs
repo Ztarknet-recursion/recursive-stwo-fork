@@ -212,6 +212,34 @@ impl M31Var {
 
         self + rhs
     }
+
+    pub fn select(a: &Self, b: &Self, bit: &BitVar) -> Self {
+        let cs = a.cs().and(&b.cs()).and(&bit.cs());
+
+        let bit_value = bit.0.value.0 != 0;
+        let value = if !bit_value { a.value } else { b.value };
+
+        // the result is a + (b - a) * bit_value
+        let b_minus_a = b - a;
+        let mut variable = cs.mul(b_minus_a.variable, bit.0.variable);
+        variable = cs.add(a.variable, variable);
+
+        M31Var {
+            cs,
+            value,
+            variable,
+        }
+    }
+
+    pub fn max(&self, rhs: &M31Var, log_size: usize) -> M31Var {
+        let shift = M31Var::new_constant(&self.cs, &M31::from(1 << log_size));
+        let v = &(self + &shift) - rhs;
+
+        let bits = crate::BitsVar::from_m31(&v, log_size + 1);
+        let is_lhs_no_less_than_rhs = &bits.0[log_size];
+
+        M31Var::select(rhs, self, &is_lhs_no_less_than_rhs)
+    }
 }
 
 #[cfg(test)]

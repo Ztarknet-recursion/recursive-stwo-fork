@@ -5,7 +5,7 @@ use cairo_air::{
 };
 use itertools::Itertools;
 use num_traits::{One, Zero};
-use std::collections::HashMap;
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use stwo::core::{
     air::Components,
     channel::{Channel, Poseidon31Channel},
@@ -14,7 +14,9 @@ use stwo::core::{
         m31::{BaseField, M31},
         qm31::{SecureField, SECURE_EXTENSION_DEGREE},
     },
+    fri::{CirclePolyDegreeBound, FriVerifier},
     pcs::{CommitmentSchemeVerifier, PcsConfig, TreeVec},
+    queries::draw_queries,
     vcs::{
         poseidon31_hash::Poseidon31Hash,
         poseidon31_merkle::{Poseidon31MerkleChannel, Poseidon31MerkleHasher},
@@ -44,6 +46,9 @@ pub struct CairoFiatShamirHints {
     pub component_generator: CairoComponents,
     pub composition_log_size: u32,
     pub n_preprocessed_columns: usize,
+
+    pub raw_queries: Vec<usize>,
+    pub query_positions_per_log_size: BTreeMap<u32, Vec<usize>>,
 }
 
 impl CairoFiatShamirHints {
@@ -159,6 +164,29 @@ impl CairoFiatShamirHints {
     }
 
     pub fn new(proof: &CairoProof<Poseidon31MerkleHasher>) -> Self {
+        assert_eq!(
+            proof.stark_proof.fri_proof.last_layer_poly.coeffs.len(),
+            1,
+            "The recursive verifier only works for last layer poly of a single constant"
+        );
+        assert_eq!(
+            proof
+                .stark_proof
+                .config
+                .fri_config
+                .log_last_layer_degree_bound,
+            0,
+            "The recursive verifier only works for last layer poly of a single constant"
+        );
+        assert_eq!(
+            proof.stark_proof.config.fri_config.log_blowup_factor, 1,
+            "The recursive verifier only works for log_blowup_factor of 1"
+        );
+        assert_eq!(
+            proof.stark_proof.config.pow_bits, 26,
+            "The recursive verifier assumes pow_bits of 26"
+        );
+
         let claim = &proof.claim;
         let stark_proof = &proof.stark_proof;
         let channel_salt = proof.channel_salt;
@@ -326,6 +354,7 @@ impl CairoFiatShamirHints {
             n_preprocessed_columns,
         };
         let composition_log_size = components.composition_log_degree_bound();
+        println!("composition_log_size: {:?}", composition_log_size);
         let random_coeff = channel.draw_secure_felt();
 
         // Read composition polynomial commitment.
@@ -343,14 +372,103 @@ impl CairoFiatShamirHints {
         // Add the composition polynomial mask points.
         sample_points.push(vec![vec![oods_point]; 2 * SECURE_EXTENSION_DEGREE]);
 
+        println!("trace columns: {}", sample_points[1].len());
+        println!("interaction columns: {}", sample_points[2].len());
+
         let _sample_points_by_column = sample_points.as_cols_ref().flatten();
 
         channel.mix_felts(&proof.stark_proof.sampled_values.clone().flatten_cols());
         let _after_sampled_values_random_coeff = channel.draw_secure_felt();
 
+        let bounds = commitment_scheme_verifier
+            .column_log_sizes()
+            .zip_cols(&sample_points)
+            .flatten()
+            .into_iter()
+            .filter_map(|(log_size, sampled_points)| {
+                if sampled_points.is_empty() {
+                    return None;
+                }
+                Some(log_size)
+            })
+            .sorted()
+            .rev()
+            .dedup()
+            .map(|log_size| {
+                CirclePolyDegreeBound::new(
+                    log_size
+                        - commitment_scheme_verifier
+                            .config
+                            .fri_config
+                            .log_blowup_factor,
+                )
+            })
+            .collect_vec();
+
+        // FRI commitment phase on OODS quotients.
+        let mut fri_verifier = FriVerifier::<Poseidon31MerkleChannel>::commit(
+            channel,
+            commitment_scheme_verifier.config.fri_config,
+            proof.stark_proof.fri_proof.clone(),
+            bounds,
+        )
+        .unwrap();
+
         println!(
-            "channel after drawing another random coeff: {:?}",
+            "number of inner layers: {:?}",
+            fri_verifier.inner_layers.len()
+        );
+        println!(
+            "number of last layer coefficients: {:?}",
+            fri_verifier.last_layer_poly.coeffs.len()
+        );
+
+        // Verify proof of work.
+        if !channel.verify_pow_nonce(
+            commitment_scheme_verifier.config.pow_bits,
+            proof.stark_proof.proof_of_work,
+        ) {
+            panic!("Proof of work failed");
+        }
+        channel.mix_u64(proof.stark_proof.proof_of_work);
+
+        let query_log_size = composition_log_size - 1
+            + commitment_scheme_verifier
+                .config
+                .fri_config
+                .log_blowup_factor;
+
+        let raw_queries = {
+            // get the raw queries
+            let mut channel_backup = channel.clone();
+            draw_queries(
+                &mut channel_backup,
+                query_log_size,
+                commitment_scheme_verifier.config.fri_config.n_queries,
+            )
+        };
+
+        // Get FRI query positions.
+        let query_positions_per_log_size = fri_verifier.sample_query_positions(channel);
+        {
+            let column_log_sizes = fri_verifier
+                .first_layer
+                .column_commitment_domains
+                .iter()
+                .map(|domain| domain.log_size())
+                .collect::<BTreeSet<u32>>();
+            let max_column_log_size = *column_log_sizes.iter().max().unwrap();
+            println!("max_log_size: {}", max_column_log_size);
+        }
+
+        println!(
+            "channel after getting query positions: {:?}",
             channel.digest()
+        );
+
+        println!(
+            "query_positions_per_log_size: {:?}",
+            query_positions_per_log_size[&composition_log_size]
         );
 
         Self {
@@ -368,6 +486,8 @@ impl CairoFiatShamirHints {
             component_generator,
             composition_log_size,
             n_preprocessed_columns,
+            raw_queries,
+            query_positions_per_log_size,
         }
     }
 }

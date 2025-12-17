@@ -46,45 +46,8 @@ impl Poseidon31MerkleHasherVar {
     }
 
     pub fn hash_m31_columns_get_rate(m31: &[M31Var]) -> Poseidon2HalfVar {
-        let len = m31.len();
-        let num_chunk = len.div_ceil(8);
         let cs = m31[0].cs();
-
-        // compute the first hash, which consists of 8 elements, and it comes from (no more than)
-        // 16 elements
-
-        let mut input: [M31Var; 8] = std::array::from_fn(|_| M31Var::zero(&cs));
-        input[0..min(len, 8)].clone_from_slice(&m31[0..min(len, 8)]);
-
-        let zero = Poseidon2HalfVar::zero(&cs);
-        let first_chunk = Poseidon2HalfVar::from_m31(&input[0..8]);
-
-        if num_chunk == 1 {
-            let digest = Poseidon2HalfVar::permute_get_capacity(&first_chunk, &zero);
-            return Poseidon2HalfVar::permute_get_rate(&Poseidon2HalfVar::zero(&cs), &digest);
-        }
-
-        let mut digest = Poseidon2HalfVar::permute_get_capacity(&first_chunk, &zero);
-        for chunk in m31.chunks_exact(8).skip(1).take(num_chunk - 2) {
-            let left = Poseidon2HalfVar::from_m31(&chunk);
-            digest = Poseidon2HalfVar::permute_get_capacity(&left, &digest);
-        }
-
-        let remain = len % 8;
-        if remain == 0 {
-            let mut input: [M31Var; 8] = std::array::from_fn(|_| M31Var::zero(&cs));
-            input[0..8].clone_from_slice(&m31[len - 8..]);
-
-            let left = Poseidon2HalfVar::from_m31(&input);
-            digest = Poseidon2HalfVar::permute_get_capacity(&left, &digest);
-        } else {
-            let mut input: [M31Var; 8] = std::array::from_fn(|_| M31Var::zero(&cs));
-            input[0..remain].clone_from_slice(&m31[len - remain..]);
-
-            let left = Poseidon2HalfVar::from_m31(&input);
-            digest = Poseidon2HalfVar::permute_get_capacity(&left, &digest);
-        }
-
+        let digest = Self::hash_m31_columns_get_capacity(m31);
         Poseidon2HalfVar::permute_get_rate(&Poseidon2HalfVar::zero(&cs), &digest)
     }
 

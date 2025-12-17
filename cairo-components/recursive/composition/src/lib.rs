@@ -7,8 +7,9 @@ use cairo_plonk_dsl_fiat_shamir::CairoFiatShamirResults;
 use cairo_plonk_dsl_hints::CairoFiatShamirHints;
 use circle_plonk_dsl_constraint_system::var::{AllocVar, Var};
 use circle_plonk_dsl_primitives::{
-    fields::WrappedQM31Var, oblivious_map::ObliviousMapVar, BitVar, CirclePointM31Var,
-    CirclePointQM31Var, M31Var, QM31Var,
+    fields::WrappedQM31Var,
+    oblivious_map::{ObliviousMapVar, SelectVar},
+    BitVar, CirclePointM31Var, CirclePointQM31Var, M31Var, QM31Var,
 };
 use indexmap::IndexMap;
 use itertools::Itertools;
@@ -17,6 +18,7 @@ use stwo::core::{
     fields::{m31::M31, qm31::SECURE_EXTENSION_DEGREE},
     poly::circle::CanonicCoset,
 };
+use stwo_cairo_common::prover_types::simd::LOG_N_LANES;
 use stwo_constraint_framework::{FrameworkComponent, FrameworkEval, PREPROCESSED_TRACE_IDX};
 
 use crate::{
@@ -140,7 +142,7 @@ impl CairoFiatCompositionCheck {
             &samples,
         );
 
-        let _composition_oods_eval = {
+        let composition_oods_expected = {
             let left_and_right_composition_mask =
                 proof.stark_proof.sampled_values.0.last().unwrap();
             let left_and_right_coordinate_evals: [QM31Var; 2 * SECURE_EXTENSION_DEGREE] =
@@ -161,20 +163,30 @@ impl CairoFiatCompositionCheck {
             let (left_coordinate_evals, right_coordinate_evals) =
                 left_and_right_coordinate_evals.split_at(SECURE_EXTENSION_DEGREE);
 
-            let _left_eval = QM31Var::from_partial_evals(left_coordinate_evals.try_into().unwrap());
-            let _right_eval =
+            let left_eval = QM31Var::from_partial_evals(left_coordinate_evals.try_into().unwrap());
+            let right_eval =
                 QM31Var::from_partial_evals(right_coordinate_evals.try_into().unwrap());
-            /*left_eval
-            + fiat_shamir_results.oods_point
-                .repeated_double(fiat_shamir_hints.composition_log_size - 2)
-                .x
-                * right_eval*/
-        };
 
-        println!(
-            "point_evaluation_accumulator: {}",
-            point_evaluation_accumulator.accumulation.value()
-        );
+            let double_times = &fiat_shamir_results.max_log_size - &M31Var::one(&proof.cs());
+
+            let mut x = fiat_shamir_results.oods_point.x.clone();
+
+            let mut session = QM31Var::select_start(&proof.cs());
+            for _ in 0..LOG_N_LANES {
+                let x_square = &x * &x;
+                x = &(&x_square + &x_square) - &M31Var::one(&x.cs());
+            }
+            for i in LOG_N_LANES..=25 {
+                let bit = double_times.is_eq(&M31Var::new_constant(&proof.cs(), &M31::from(i)));
+                QM31Var::select_add(&mut session, &x, &bit);
+                let x_square = &x * &x;
+                x = &(&x_square + &x_square) - &M31Var::one(&x.cs());
+            }
+            let result = QM31Var::select_end(session);
+
+            &left_eval + &(&result * &right_eval)
+        };
+        composition_oods_expected.equalverify(&point_evaluation_accumulator.accumulation);
     }
 
     pub fn opcodes_evaluation(

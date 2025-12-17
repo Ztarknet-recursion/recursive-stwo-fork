@@ -1,14 +1,22 @@
+use cairo_air::PreProcessedTraceVariant;
 use circle_plonk_dsl_constraint_system::{
     var::{AllocVar, AllocationMode, Var},
     ConstraintSystemRef,
 };
-use circle_plonk_dsl_primitives::QM31Var;
 use circle_plonk_dsl_primitives::{BitVar, HashVar};
+use circle_plonk_dsl_primitives::{M31Var, QM31Var};
 use num_traits::Zero;
 use stwo::core::{
-    fields::qm31::QM31, pcs::TreeVec, proof::StarkProof,
-    vcs::poseidon31_merkle::Poseidon31MerkleHasher, ColumnVec,
+    fields::{m31::M31, qm31::QM31},
+    fri::FriProof,
+    pcs::TreeVec,
+    proof::StarkProof,
+    vcs::poseidon31_merkle::Poseidon31MerkleHasher,
+    ColumnVec,
 };
+use stwo_cairo_common::preprocessed_columns::preprocessed_trace::MAX_SEQUENCE_LOG_SIZE;
+
+use crate::BitIntVar;
 
 #[derive(Debug, Clone)]
 pub struct StarkProofVar {
@@ -20,6 +28,9 @@ pub struct StarkProofVar {
 
     pub sampled_values: TreeVec<ColumnVec<Vec<QM31Var>>>,
     pub is_preprocessed_trace_present: ColumnVec<BitVar>,
+
+    pub fri_proof: FriProofVar,
+    pub proof_of_work: BitIntVar<64>,
 }
 
 impl Var for StarkProofVar {
@@ -67,6 +78,9 @@ impl AllocVar for StarkProofVar {
             sampled_values.push(round_res);
         }
 
+        let fri_proof = FriProofVar::new_variables(cs, &value.fri_proof, mode);
+        let proof_of_work = BitIntVar::<64>::new_variables(cs, &value.proof_of_work, mode);
+
         Self {
             cs: cs.clone(),
             trace_commitment,
@@ -74,6 +88,77 @@ impl AllocVar for StarkProofVar {
             composition_commitment,
             sampled_values,
             is_preprocessed_trace_present,
+            fri_proof,
+            proof_of_work,
         }
     }
+}
+
+impl StarkProofVar {
+    pub fn max_preprocessed_trace_log_size(&self) -> M31Var {
+        let cs = self.cs.clone();
+        let preprocessed_trace =
+            PreProcessedTraceVariant::CanonicalWithoutPedersen.to_preprocessed_trace();
+        let log_sizes = preprocessed_trace.log_sizes();
+
+        assert_eq!(log_sizes.len(), self.is_preprocessed_trace_present.len());
+
+        let mut max = M31Var::zero(&self.cs);
+        for (log_size, is_present) in log_sizes
+            .iter()
+            .zip(self.is_preprocessed_trace_present.iter())
+        {
+            let current_log_size = M31Var::new_constant(&cs, &M31::from(*log_size));
+            let candidate_max = max.max(&current_log_size, 5);
+            max = M31Var::select(&max, &candidate_max, &is_present);
+        }
+        max
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct FriProofVar {
+    pub first_layer: FriLayerProofVar,
+    pub inner_layers: Vec<FriLayerProofVar>,
+    pub last_layer_constant: QM31Var,
+}
+
+impl Var for FriProofVar {
+    type Value = FriProof<Poseidon31MerkleHasher>;
+    fn cs(&self) -> ConstraintSystemRef {
+        self.first_layer.commitment.cs()
+    }
+}
+
+impl AllocVar for FriProofVar {
+    fn new_variables(cs: &ConstraintSystemRef, value: &Self::Value, mode: AllocationMode) -> Self {
+        let first_layer = FriLayerProofVar {
+            commitment: HashVar::new_variables(cs, &value.first_layer.commitment.0, mode),
+        };
+        let mut inner_layers = vec![];
+        for layer in value.inner_layers.iter() {
+            inner_layers.push(FriLayerProofVar {
+                commitment: HashVar::new_variables(cs, &layer.commitment.0, mode),
+            });
+        }
+        for _ in inner_layers.len()..MAX_SEQUENCE_LOG_SIZE as usize {
+            inner_layers.push(FriLayerProofVar {
+                commitment: HashVar::new_variables(cs, &[M31::zero(); 8], mode),
+            });
+        }
+
+        let last_layer_constant =
+            QM31Var::new_variables(cs, &value.last_layer_poly.coeffs[0], mode);
+
+        Self {
+            first_layer,
+            inner_layers,
+            last_layer_constant,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct FriLayerProofVar {
+    pub commitment: HashVar,
 }

@@ -11,6 +11,7 @@ num-traits.workspace = true
 itertools.workspace = true
 cairo-air.workspace = true
 stwo-cairo-common.workspace = true
+indexmap.workspace = true
 
 [dev-dependencies]
 bincode.workspace = true

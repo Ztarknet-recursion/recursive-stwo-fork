@@ -31,3 +31,23 @@ pub trait AllocVar: Var {
         Self::new_variables(cs, value, AllocationMode::Witness)
     }
 }
+
+impl<T: Var> Var for (T, T) {
+    type Value = (T::Value, T::Value);
+
+    fn cs(&self) -> ConstraintSystemRef {
+        self.0.cs().and(&self.1.cs())
+    }
+}
+
+impl<T: AllocVar> AllocVar for (T, T) {
+    fn new_variables(
+        cs: &ConstraintSystemRef,
+        value: &<Self as Var>::Value,
+        mode: AllocationMode,
+    ) -> Self {
+        let left = T::new_variables(cs, &value.0, mode);
+        let right = T::new_variables(cs, &value.1, mode);
+        (left, right)
+    }
+}
