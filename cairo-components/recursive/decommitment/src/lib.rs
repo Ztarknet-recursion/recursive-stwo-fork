@@ -4,7 +4,10 @@ use cairo_plonk_dsl_hints::{CairoDecommitmentHints, CairoFiatShamirHints};
 use circle_plonk_dsl_constraint_system::var::{AllocVar, Var};
 use circle_plonk_dsl_primitives::{BitsVar, HashVar};
 
-use crate::data_structures::{PreprocessedTraceQueryResultVar, QueryDecommitmentProofVar};
+use crate::data_structures::{
+    CompositionQueryResultVar, InteractionQueryResultVar, PreprocessedTraceQueryResultVar,
+    QueryDecommitmentProofVar, TraceQueryResultVar,
+};
 
 pub mod data_structures;
 
@@ -13,6 +16,9 @@ pub struct CairoDecommitmentResults(pub Vec<CairoDecommitmentResultVar>);
 pub struct CairoDecommitmentResultVar {
     pub query: BitsVar,
     pub preprocessed_trace_query_result: PreprocessedTraceQueryResultVar,
+    pub trace_query_result: TraceQueryResultVar,
+    pub interaction_query_result: InteractionQueryResultVar,
+    pub composition_query_result: CompositionQueryResultVar,
 }
 
 impl CairoDecommitmentResults {
@@ -24,16 +30,23 @@ impl CairoDecommitmentResults {
     ) -> Self {
         let mut results = vec![];
         let cs = proof.cs();
-        for i in 0..decommitment_hints.preprocessed_trace.len() {
+        for i in 0..fiat_shamir_hints.pcs_config.fri_config.n_queries {
             let preprocessed_result_var = PreprocessedTraceQueryResultVar::new_witness(
                 &cs,
                 &decommitment_hints.preprocessed_trace[i],
             );
-            let decommitment_proof_var = QueryDecommitmentProofVar::new_witness(
+            let trace_result_var =
+                TraceQueryResultVar::new_witness(&cs, &decommitment_hints.trace[i]);
+            let interaction_result_var =
+                InteractionQueryResultVar::new_witness(&cs, &decommitment_hints.interaction[i]);
+            let composition_result_var =
+                CompositionQueryResultVar::new_witness(&cs, &decommitment_hints.composition[i]);
+
+            let preprocessed_trace_decommitment_proof_var = QueryDecommitmentProofVar::new_witness(
                 &cs,
                 &decommitment_hints.preprocessed_trace_decommitment_proofs[i],
             );
-            decommitment_proof_var.verify(
+            preprocessed_trace_decommitment_proof_var.verify(
                 fiat_shamir_hints.pcs_config.fri_config.log_blowup_factor,
                 &fiat_shamir_results.queries[i],
                 &HashVar::new_constant(&cs, &fiat_shamir_hints.preprocessed_commitment),
@@ -41,9 +54,26 @@ impl CairoDecommitmentResults {
                 &preprocessed_result_var.compute_column_hashes(),
             );
 
+            // TODO: compute their merkle column hashes
+            let _trace_proof_var = QueryDecommitmentProofVar::new_witness(
+                &cs,
+                &decommitment_hints.trace_decommitment_proofs[i],
+            );
+            let _interaction_proof_var = QueryDecommitmentProofVar::new_witness(
+                &cs,
+                &decommitment_hints.interaction_decommitment_proofs[i],
+            );
+            let _composition_proof_var = QueryDecommitmentProofVar::new_witness(
+                &cs,
+                &decommitment_hints.composition_decommitment_proofs[i],
+            );
+
             results.push(CairoDecommitmentResultVar {
                 query: fiat_shamir_results.queries[i].clone(),
                 preprocessed_trace_query_result: preprocessed_result_var,
+                trace_query_result: trace_result_var,
+                interaction_query_result: interaction_result_var,
+                composition_query_result: composition_result_var,
             });
         }
         Self(results)
@@ -61,7 +91,7 @@ mod tests {
     use std::path::PathBuf;
 
     #[test]
-    fn test_preprocessed_trace_query() {
+    fn test_decommitment() {
         let manifest_dir = env!("CARGO_MANIFEST_DIR");
         let data_path = PathBuf::from(manifest_dir)
             .parent()

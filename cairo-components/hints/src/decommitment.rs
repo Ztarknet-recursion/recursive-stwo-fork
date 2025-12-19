@@ -1,8 +1,10 @@
+mod composition;
 mod interaction;
 mod preprocessed;
 mod trace;
 mod utils;
 
+pub use composition::*;
 pub use interaction::*;
 pub use preprocessed::{read_preprocessed_trace, PreprocessedTraceQueryResult};
 pub use trace::*;
@@ -13,7 +15,10 @@ use cairo_air::CairoProof;
 use indexmap::IndexMap;
 use itertools::Itertools;
 use stwo::core::{
-    fields::m31::{BaseField, M31},
+    fields::{
+        m31::{BaseField, M31},
+        qm31::SECURE_EXTENSION_DEGREE,
+    },
     utils::PeekableExt,
     vcs::{
         poseidon31_hash::Poseidon31Hash,
@@ -290,6 +295,8 @@ pub struct CairoDecommitmentHints {
     pub trace_decommitment_proofs: Vec<QueryDecommitmentProof>,
     pub interaction: Vec<InteractionQueryResult>,
     pub interaction_decommitment_proofs: Vec<QueryDecommitmentProof>,
+    pub composition: Vec<CompositionQueryResult>,
+    pub composition_decommitment_proofs: Vec<QueryDecommitmentProof>,
 }
 
 impl CairoDecommitmentHints {
@@ -351,6 +358,22 @@ impl CairoDecommitmentHints {
             proof.stark_proof.decommitments[2].clone(),
         );
 
+        let column_log_sizes = [fiat_shamir_hints.composition_log_size - 1;
+            2 * SECURE_EXTENSION_DEGREE]
+            .iter()
+            .map(|log_size| log_size + fiat_shamir_hints.pcs_config.fri_config.log_blowup_factor)
+            .collect_vec();
+        let merkle_verifier =
+            MerkleVerifier::new(proof.stark_proof.commitments[3], column_log_sizes);
+        let composition = read_composition(fiat_shamir_hints, proof);
+        let composition_decommitment_proofs = QueryDecommitmentProof::from_stwo_proof(
+            &merkle_verifier,
+            fiat_shamir_hints.raw_queries.clone(),
+            &fiat_shamir_hints.query_positions_per_log_size,
+            proof.stark_proof.queried_values[3].clone(),
+            proof.stark_proof.decommitments[3].clone(),
+        );
+
         Self {
             preprocessed_trace,
             preprocessed_trace_decommitment_proofs,
@@ -358,6 +381,8 @@ impl CairoDecommitmentHints {
             trace_decommitment_proofs,
             interaction,
             interaction_decommitment_proofs,
+            composition,
+            composition_decommitment_proofs,
         }
     }
 }
@@ -433,6 +458,36 @@ mod tests {
         let decommitment_proof = decommitment_hints.interaction_decommitment_proofs[0].clone();
         let column_hashes = decommitment_hints.interaction[0]
             .compute_hashes(&proof.interaction_claim, &proof.claim);
+        let leaf_layer_hash =
+            Poseidon31MerkleHasher::hash_column_get_capacity(&decommitment_proof.leaf_values);
+        assert_eq!(
+            leaf_layer_hash,
+            *column_hashes
+                .get(
+                    &(decommitment_proof.intermediate_layers.len()
+                        - fiat_shamir_hints.pcs_config.fri_config.log_blowup_factor as usize)
+                )
+                .unwrap()
+        );
+
+        for (idx, node) in decommitment_proof.intermediate_layers.iter() {
+            if !node.value.is_empty() {
+                assert_eq!(
+                    column_hashes
+                        .get(
+                            &(idx
+                                - fiat_shamir_hints.pcs_config.fri_config.log_blowup_factor
+                                    as usize)
+                        )
+                        .unwrap(),
+                    &Poseidon31MerkleHasher::hash_column_get_capacity(&node.value)
+                );
+            }
+        }
+
+        let decommitment_proof = decommitment_hints.composition_decommitment_proofs[0].clone();
+        let column_hashes = decommitment_hints.composition[0]
+            .compute_hashes(fiat_shamir_hints.composition_log_size);
         let leaf_layer_hash =
             Poseidon31MerkleHasher::hash_column_get_capacity(&decommitment_proof.leaf_values);
         assert_eq!(

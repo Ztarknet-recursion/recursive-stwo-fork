@@ -1,6 +1,10 @@
+mod composition;
+mod interaction;
 mod preprocessed;
 mod trace;
 
+pub use composition::*;
+pub use interaction::*;
 pub use preprocessed::PreprocessedTraceQueryResultVar;
 pub use trace::*;
 
