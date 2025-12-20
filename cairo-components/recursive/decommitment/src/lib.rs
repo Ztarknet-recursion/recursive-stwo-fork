@@ -2,7 +2,9 @@ use cairo_plonk_dsl_data_structures::CairoProofVar;
 use cairo_plonk_dsl_fiat_shamir::CairoFiatShamirResults;
 use cairo_plonk_dsl_hints::{CairoDecommitmentHints, CairoFiatShamirHints};
 use circle_plonk_dsl_constraint_system::var::{AllocVar, Var};
-use circle_plonk_dsl_primitives::{BitsVar, HashVar};
+use circle_plonk_dsl_primitives::{BitsVar, HashVar, M31Var};
+use stwo::core::fields::m31::M31;
+use stwo_cairo_common::preprocessed_columns::preprocessed_trace::MAX_SEQUENCE_LOG_SIZE;
 
 use crate::data_structures::{
     CompositionQueryResultVar, InteractionQueryResultVar, PreprocessedTraceQueryResultVar,
@@ -51,6 +53,7 @@ impl CairoDecommitmentResults {
                 fiat_shamir_hints.pcs_config.fri_config.log_blowup_factor,
                 &fiat_shamir_results.queries[i],
                 &HashVar::new_constant(&cs, &fiat_shamir_hints.preprocessed_commitment),
+                &M31Var::new_constant(&cs, &M31::from(MAX_SEQUENCE_LOG_SIZE)),
                 &fiat_shamir_results.max_log_size,
                 &preprocessed_result_var.compute_column_hashes(),
             );

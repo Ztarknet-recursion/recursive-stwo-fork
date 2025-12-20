@@ -52,3 +52,30 @@
 **Reference**: 
 - See `QueryDecommitmentNode::hash()` in `cairo-components/hints/src/decommitment.rs` for hash computation
 - See `Poseidon31MerkleHasherVar` in `primitives/src/merkle.rs` for available hashing methods
+
+### 3. Fixed-Height Decommitment Merkle Tree Proof Allocation
+**Location**: `cairo-components/recursive/decommitment`
+
+**Context**:
+- Need to allocate and process the decommitment merkle tree proof in a way that maintains a fixed height
+- The current code needs to be able to handle this fixed-height structure
+
+**Tasks**:
+- [ ] Design a mechanism to allocate decommitment merkle tree proofs with a fixed height
+- [ ] Ensure the allocation process maintains consistent tree height regardless of input size
+- [ ] Update existing code to handle the fixed-height structure
+- [ ] Verify that the fixed-height approach works with the current constraint system implementation
+
+### 4. Compressed Hash Accumulation Data Structure
+**Location**: `cairo-components/recursive/decommitment`
+
+**Context**:
+- Need a data structure to hold multiple compressed hash accumulations
+- Will be used to implement `compute_hashes` functionality
+
+**Tasks**:
+- [ ] Create a data structure that holds a collection of compressed hash accumulations
+  - Consider using `HashAccumulatorCompressedVar` or `HashAccumulatorQM31CompressedVar` as building blocks
+- [ ] Design the structure to efficiently store and access multiple compressed accumulations
+- [ ] Implement `compute_hashes` method for the data structure
+- [ ] Ensure the structure integrates well with existing decommitment code

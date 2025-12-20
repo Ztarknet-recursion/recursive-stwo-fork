@@ -3,7 +3,9 @@ use circle_plonk_dsl_constraint_system::{
     var::{AllocVar, AllocationMode, Var},
     ConstraintSystemRef,
 };
-use circle_plonk_dsl_primitives::{M31Var, Poseidon2HalfVar, Poseidon31MerkleHasherVar};
+use circle_plonk_dsl_primitives::{
+    option::OptionVar, M31Var, Poseidon2HalfVar, Poseidon31MerkleHasherVar,
+};
 use indexmap::IndexMap;
 
 pub struct PreprocessedTraceQueryResultVar {
@@ -373,7 +375,7 @@ impl AllocVar for PreprocessedTraceQueryResultVar {
 }
 
 impl PreprocessedTraceQueryResultVar {
-    pub fn compute_column_hashes(&self) -> IndexMap<usize, Poseidon2HalfVar> {
+    pub fn compute_column_hashes(&self) -> IndexMap<usize, OptionVar<Poseidon2HalfVar>> {
         let mut map = IndexMap::new();
         map.insert(
             25,
@@ -568,6 +570,12 @@ impl PreprocessedTraceQueryResultVar {
                 self.blake_sigma_15.clone(),
             ]),
         );
+
+        let cs = self.cs();
+        let map = map
+            .into_iter()
+            .map(|(k, v)| (k, OptionVar::some(&cs, v)))
+            .collect();
         map
     }
 }

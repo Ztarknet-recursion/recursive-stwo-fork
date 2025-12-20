@@ -25,3 +25,18 @@ impl<T: Var<Value: Default> + AllocVar> AllocVar for OptionVar<T> {
         Self { is_some, value }
     }
 }
+
+impl<T: Var<Value: Default> + AllocVar> OptionVar<T> {
+    pub fn none(cs: &ConstraintSystemRef) -> Self {
+        Self::new_variables(cs, &None, AllocationMode::Witness)
+    }
+}
+
+impl<T: Var + AllocVar> OptionVar<T> {
+    pub fn some(cs: &ConstraintSystemRef, value: T) -> Self {
+        Self {
+            is_some: BitVar::new_true(cs),
+            value: value,
+        }
+    }
+}

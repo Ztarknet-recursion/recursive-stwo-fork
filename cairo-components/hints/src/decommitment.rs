@@ -34,6 +34,7 @@ use crate::CairoFiatShamirHints;
 #[derive(Debug, Clone)]
 pub struct QueryDecommitmentProof {
     pub query: usize,
+    pub log_blowup_factor: u32,
     pub leaf_values: Vec<M31>,
     pub intermediate_layers: IndexMap<usize, QueryDecommitmentNode>,
 }
@@ -67,6 +68,7 @@ impl QueryDecommitmentProof {
         queries_per_log_size: &BTreeMap<u32, Vec<usize>>,
         queried_values: Vec<BaseField>,
         decommitment: MerkleDecommitment<Poseidon31MerkleHasher>,
+        log_blowup_factor: u32,
     ) -> Vec<QueryDecommitmentProof> {
         let mut layers = IndexMap::new();
 
@@ -213,6 +215,7 @@ impl QueryDecommitmentProof {
 
             let proof = QueryDecommitmentProof {
                 query: *query,
+                log_blowup_factor: log_blowup_factor,
                 leaf_values,
                 intermediate_layers: nodes,
             };
@@ -316,9 +319,11 @@ impl CairoDecommitmentHints {
             proof.stark_proof.queried_values[3].len()
         );
 
+        let log_blowup_factor = fiat_shamir_hints.pcs_config.fri_config.log_blowup_factor;
+
         let column_log_sizes = fiat_shamir_hints.log_sizes[0]
             .iter()
-            .map(|log_size| log_size + fiat_shamir_hints.pcs_config.fri_config.log_blowup_factor)
+            .map(|log_size| log_size + log_blowup_factor)
             .collect_vec();
         let merkle_verifier =
             MerkleVerifier::new(proof.stark_proof.commitments[0], column_log_sizes);
@@ -328,6 +333,7 @@ impl CairoDecommitmentHints {
             &fiat_shamir_hints.query_positions_per_log_size,
             proof.stark_proof.queried_values[0].clone(),
             proof.stark_proof.decommitments[0].clone(),
+            log_blowup_factor,
         );
 
         let column_log_sizes = fiat_shamir_hints.log_sizes[1]
@@ -342,6 +348,7 @@ impl CairoDecommitmentHints {
             &fiat_shamir_hints.query_positions_per_log_size,
             proof.stark_proof.queried_values[1].clone(),
             proof.stark_proof.decommitments[1].clone(),
+            log_blowup_factor,
         );
 
         let column_log_sizes = fiat_shamir_hints.log_sizes[2]
@@ -356,6 +363,7 @@ impl CairoDecommitmentHints {
             &fiat_shamir_hints.query_positions_per_log_size,
             proof.stark_proof.queried_values[2].clone(),
             proof.stark_proof.decommitments[2].clone(),
+            log_blowup_factor,
         );
 
         let column_log_sizes = [fiat_shamir_hints.composition_log_size - 1;
@@ -372,6 +380,7 @@ impl CairoDecommitmentHints {
             &fiat_shamir_hints.query_positions_per_log_size,
             proof.stark_proof.queried_values[3].clone(),
             proof.stark_proof.decommitments[3].clone(),
+            log_blowup_factor,
         );
 
         Self {
