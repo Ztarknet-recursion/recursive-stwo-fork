@@ -53,6 +53,10 @@ impl Neg for &BitVar {
 }
 
 impl BitVar {
+    pub fn value(&self) -> bool {
+        self.0.value.0 != 0
+    }
+
     pub fn equalverify(&self, rhs: &BitVar) {
         self.0.equalverify(&rhs.0);
     }

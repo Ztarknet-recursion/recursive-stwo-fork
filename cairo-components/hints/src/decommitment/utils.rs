@@ -5,7 +5,6 @@ use stwo::core::{
 };
 
 pub struct HashAccumulator {
-    pub count: usize,
     pub size: usize,
     pub digest: [M31; 8],
     pub buffer: [M31; 8],
@@ -14,7 +13,6 @@ pub struct HashAccumulator {
 impl Default for HashAccumulator {
     fn default() -> Self {
         Self {
-            count: 0,
             size: 0,
             digest: [M31::default(); 8],
             buffer: [M31::default(); 8],
@@ -44,11 +42,10 @@ impl HashAccumulator {
                 self.size = 0;
             }
         }
-        self.count += data.len()
     }
 
     pub fn finalize(&self) -> [M31; 8] {
-        if self.count % 8 != 0 {
+        if self.size != 0 {
             let mut state = [M31::default(); 16];
             for i in 0..self.size {
                 state[i] = self.buffer[i];
@@ -100,7 +97,6 @@ impl ColumnsHasherQM31 {
 }
 
 pub struct HashAccumulatorQM31 {
-    pub count: usize,
     pub size: usize,
     pub digest: [M31; 8],
     pub buffer: [QM31; 2],
@@ -109,7 +105,6 @@ pub struct HashAccumulatorQM31 {
 impl Default for HashAccumulatorQM31 {
     fn default() -> Self {
         Self {
-            count: 0,
             size: 0,
             digest: [M31::default(); 8],
             buffer: [QM31::default(); 2],
@@ -137,11 +132,10 @@ impl HashAccumulatorQM31 {
                 self.size = 0;
             }
         }
-        self.count += data.len()
     }
 
     pub fn finalize(&self) -> [M31; 8] {
-        if self.count % 2 != 0 {
+        if self.size != 0 {
             let mut state = [M31::default(); 16];
             state[0..4].copy_from_slice(&self.buffer[0].to_m31_array());
             for i in 0..8 {

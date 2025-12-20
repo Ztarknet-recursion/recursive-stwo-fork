@@ -10,6 +10,7 @@ use crate::data_structures::{
 };
 
 pub mod data_structures;
+pub mod utils;
 
 pub struct CairoDecommitmentResults(pub Vec<CairoDecommitmentResultVar>);
 

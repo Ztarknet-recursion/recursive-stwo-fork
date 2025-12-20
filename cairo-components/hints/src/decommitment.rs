@@ -2,7 +2,7 @@ mod composition;
 mod interaction;
 mod preprocessed;
 mod trace;
-mod utils;
+pub mod utils;
 
 pub use composition::*;
 pub use interaction::*;

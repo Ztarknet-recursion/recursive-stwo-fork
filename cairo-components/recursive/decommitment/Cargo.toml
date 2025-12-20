@@ -16,3 +16,5 @@ bincode.workspace = true
 num-traits.workspace = true
 cairo-air.workspace = true
 indexmap.workspace = true
+rand_chacha.workspace = true
+rand.workspace = true
