@@ -12,6 +12,7 @@ circle-plonk-dsl-primitives = { path = "../../../primitives" }
 circle-plonk-dsl-constraint-system = { path = "../../../constraint_system" }
 cairo-plonk-dsl-data-structures = { path = "../data_structures" }
 cairo-plonk-dsl-fiat-shamir = { path = "../fiat_shamir" }
+cairo-plonk-dsl-decommitment = { path = "../decommitment" }
 bincode.workspace = true
 num-traits.workspace = true
 cairo-air.workspace = true

@@ -1,10 +1,17 @@
 use cairo_air::CairoProof;
-use itertools::{izip, multiunzip, Itertools};
+use itertools::{izip, multiunzip, zip_eq, Itertools};
+use num_traits::Zero;
 use std::{cmp::Reverse, collections::BTreeMap};
 use stwo::core::{
-    fields::{m31::BaseField, qm31::SecureField},
+    circle::CirclePoint,
+    fields::{
+        cm31::CM31,
+        m31::{BaseField, M31},
+        qm31::SecureField,
+        FieldExpOps,
+    },
     pcs::{
-        quotients::{accumulate_row_quotients, quotient_constants, ColumnSampleBatch, PointSample},
+        quotients::{quotient_constants, ColumnSampleBatch, PointSample, QuotientConstants},
         TreeVec,
     },
     poly::circle::CanonicCoset,
@@ -127,7 +134,6 @@ pub fn fri_answers(
         .filter_map(|(log_size, tuples)| {
             // Skip processing this log size if it does not have any associated queries.
             let queries_for_log_size = query_positions_per_log_size.get(&log_size)?;
-            println!("log_size: {:?}", log_size);
 
             let (_, samples): (Vec<_>, Vec<_>) = multiunzip(tuples);
             Some(fri_answers_for_log_size(
@@ -157,9 +163,7 @@ pub fn fri_answers_for_log_size(
     let quotient_constants = quotient_constants(&sample_batches, random_coeff);
     let commitment_domain = CanonicCoset::new(log_size).circle_domain();
 
-    println!("query positions len: {:?}", query_positions.len());
-
-    let mut quotient_evals_at_queries = Vec::new();
+    let mut quotient_evals_at_queries: Vec<stwo::core::fields::qm31::QM31> = Vec::new();
     for &query_position in query_positions {
         let domain_point = commitment_domain.at(bit_reverse_index(query_position, log_size));
 
@@ -180,6 +184,57 @@ pub fn fri_answers_for_log_size(
     }
 
     Ok(quotient_evals_at_queries)
+}
+
+pub fn accumulate_row_quotients(
+    sample_batches: &[ColumnSampleBatch],
+    queried_values_at_row: &[BaseField],
+    quotient_constants: &QuotientConstants,
+    domain_point: CirclePoint<BaseField>,
+) -> SecureField {
+    let denominator_inverses = denominator_inverses(sample_batches, domain_point);
+    let mut row_accumulator = SecureField::zero();
+    for (sample_batch, line_coeffs, denominator_inverse) in izip!(
+        sample_batches,
+        &quotient_constants.line_coeffs,
+        denominator_inverses
+    ) {
+        let mut numerator = SecureField::zero();
+        for ((column_index, _), (a, b, c)) in zip_eq(&sample_batch.columns_and_values, line_coeffs)
+        {
+            let value = queried_values_at_row[*column_index] * *c;
+            // The numerator is a line equation passing through
+            //   (sample_point.y, sample_value), (conj(sample_point), conj(sample_value))
+            // evaluated at (domain_point.y, value).
+            // When substituting a polynomial in this line equation, we get a polynomial with a root
+            // at sample_point and conj(sample_point) if the original polynomial had the values
+            // sample_value and conj(sample_value) at these points.
+            let linear_term = *a * domain_point.y + *b;
+            numerator += value - linear_term;
+        }
+        row_accumulator += numerator.mul_cm31(denominator_inverse);
+    }
+    row_accumulator
+}
+
+fn denominator_inverses(
+    sample_batches: &[ColumnSampleBatch],
+    domain_point: CirclePoint<M31>,
+) -> Vec<CM31> {
+    let mut denominators = Vec::new();
+
+    // We want a P to be on a line that passes through a point Pr + uPi in QM31^2, and its conjugate
+    // Pr - uPi. Thus, Pr - P is parallel to Pi. Or, (Pr - P).x * Pi.y - (Pr - P).y * Pi.x = 0.
+    for sample_batch in sample_batches {
+        // Extract Pr, Pi.
+        let prx = sample_batch.point.x.0;
+        let pry = sample_batch.point.y.0;
+        let pix = sample_batch.point.x.1;
+        let piy = sample_batch.point.y.1;
+        denominators.push((prx - domain_point.x) * piy - (pry - domain_point.y) * pix);
+    }
+
+    CM31::batch_inverse(&denominators)
 }
 
 #[cfg(test)]

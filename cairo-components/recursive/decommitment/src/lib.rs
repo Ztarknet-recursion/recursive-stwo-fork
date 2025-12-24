@@ -3,6 +3,7 @@ use cairo_plonk_dsl_fiat_shamir::CairoFiatShamirResults;
 use cairo_plonk_dsl_hints::{CairoDecommitmentHints, CairoFiatShamirHints};
 use circle_plonk_dsl_constraint_system::var::{AllocVar, Var};
 use circle_plonk_dsl_primitives::{BitsVar, HashVar, M31Var};
+use std::ops::Index;
 use stwo::core::fields::m31::M31;
 use stwo_cairo_common::preprocessed_columns::preprocessed_trace::MAX_SEQUENCE_LOG_SIZE;
 
@@ -14,7 +15,15 @@ use crate::data_structures::{
 pub mod data_structures;
 pub mod utils;
 
-pub struct CairoDecommitmentResults(pub Vec<CairoDecommitmentResultVar>);
+pub struct CairoDecommitmentResultsVar(pub Vec<CairoDecommitmentResultVar>);
+
+impl Index<usize> for CairoDecommitmentResultsVar {
+    type Output = CairoDecommitmentResultVar;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.0[index]
+    }
+}
 
 pub struct CairoDecommitmentResultVar {
     pub query: BitsVar,
@@ -24,7 +33,7 @@ pub struct CairoDecommitmentResultVar {
     pub composition_query_result: CompositionQueryResultVar,
 }
 
-impl CairoDecommitmentResults {
+impl CairoDecommitmentResultsVar {
     pub fn compute(
         fiat_shamir_hints: &CairoFiatShamirHints,
         decommitment_hints: &CairoDecommitmentHints,
@@ -139,7 +148,7 @@ mod tests {
         let proof_var = CairoProofVar::new_witness(&cs, &proof);
         let fiat_shamir_results = CairoFiatShamirResults::compute(&fiat_shamir_hints, &proof_var);
 
-        let _ = CairoDecommitmentResults::compute(
+        let _ = CairoDecommitmentResultsVar::compute(
             &fiat_shamir_hints,
             &decommitment_hints,
             &fiat_shamir_results,

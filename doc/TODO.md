@@ -9,13 +9,6 @@
   - [ ] Ensure `SampleVar` maintains the same structural relationships as `Query` for consistency
   - [ ] Implement in appropriate location (likely `components/recursive/answer/src/data_structures.rs` or similar)
 
-### 2. Interaction Data Structure with Two Queries
-- [ ] Create a data structure for interaction where the last `QM31Var` always has two queries
-  - [ ] Review `InteractionQueryResultVar` in `cairo-components/recursive/decommitment/src/data_structures/interaction.rs`
-  - [ ] Design structure ensuring the last `QM31Var` field always contains exactly two queries
-  - [ ] Update interaction query result handling to enforce this constraint
-  - [ ] Add validation/assertions to ensure the two-query requirement is met
-
 ## Constraint System Implementation
 
 ### 3. Masked Point Computation

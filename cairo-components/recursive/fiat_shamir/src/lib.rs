@@ -25,6 +25,7 @@ pub struct CairoFiatShamirResults {
     pub interaction_elements: CairoInteractionElementsVar,
     pub max_log_size: M31Var,
     pub queries: Vec<BitsVar>,
+    pub query_log_size: M31Var,
 }
 
 impl CairoFiatShamirResults {
@@ -153,9 +154,13 @@ impl CairoFiatShamirResults {
         }
         raw_queries.truncate(pcs_config.fri_config.n_queries);
 
+        let max_len = (MAX_SEQUENCE_LOG_SIZE
+            + fiat_shamir_hints.pcs_config.fri_config.log_blowup_factor)
+            as usize;
+
         let mut mask: Vec<BitVar> = vec![];
         let mut cur = query_log_size.clone();
-        for _ in 0..31 {
+        for _ in 0..max_len {
             let is_cur_nonzero = cur.is_zero().neg();
             cur = &cur - &is_cur_nonzero.0;
             mask.push(is_cur_nonzero);
@@ -164,7 +169,8 @@ impl CairoFiatShamirResults {
         let mut queries = vec![];
         for i in 0..raw_queries.len() {
             let mut bits = BitsVar::from_m31(&raw_queries[i], 31);
-            for j in 0..31 {
+            bits.0.truncate(max_len);
+            for j in 0..max_len {
                 bits.0[j] = &bits.0[j] & &mask[j];
             }
             queries.push(bits);
@@ -182,6 +188,7 @@ impl CairoFiatShamirResults {
             interaction_elements,
             max_log_size: max_trace_and_interaction_log_size,
             queries,
+            query_log_size,
         }
     }
 
