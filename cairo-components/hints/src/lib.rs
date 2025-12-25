@@ -9,3 +9,5 @@ pub use decommitment::*;
 
 pub mod answer;
 pub use answer::*;
+
+pub mod folding;

@@ -51,6 +51,7 @@ pub struct CairoFiatShamirHints {
     pub query_positions_per_log_size: BTreeMap<u32, Vec<usize>>,
 
     pub commitment_scheme_verifier: CommitmentSchemeVerifier<Poseidon31MerkleChannel>,
+    pub fri_verifier: FriVerifier<Poseidon31MerkleChannel>,
     pub after_sampled_values_random_coeff: QM31,
 }
 
@@ -491,6 +492,7 @@ impl CairoFiatShamirHints {
             query_positions_per_log_size,
 
             commitment_scheme_verifier,
+            fri_verifier,
             after_sampled_values_random_coeff,
         }
     }

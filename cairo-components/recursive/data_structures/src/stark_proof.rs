@@ -5,6 +5,7 @@ use circle_plonk_dsl_constraint_system::{
 };
 use circle_plonk_dsl_primitives::{BitVar, HashVar};
 use circle_plonk_dsl_primitives::{M31Var, QM31Var};
+use indexmap::IndexMap;
 use num_traits::Zero;
 use stwo::core::{
     fields::{m31::M31, qm31::QM31},
@@ -119,14 +120,14 @@ impl StarkProofVar {
 #[derive(Debug, Clone)]
 pub struct FriProofVar {
     pub first_layer: FriLayerProofVar,
-    pub inner_layers: Vec<FriLayerProofVar>,
+    pub inner_layers: IndexMap<u32, FriLayerProofVar>,
     pub last_layer_constant: QM31Var,
 }
 
 impl Var for FriProofVar {
     type Value = FriProof<Poseidon31MerkleHasher>;
     fn cs(&self) -> ConstraintSystemRef {
-        self.first_layer.commitment.cs()
+        self.last_layer_constant.cs()
     }
 }
 
@@ -135,16 +136,28 @@ impl AllocVar for FriProofVar {
         let first_layer = FriLayerProofVar {
             commitment: HashVar::new_variables(cs, &value.first_layer.commitment, mode),
         };
-        let mut inner_layers = vec![];
-        for layer in value.inner_layers.iter() {
-            inner_layers.push(FriLayerProofVar {
-                commitment: HashVar::new_variables(cs, &layer.commitment, mode),
-            });
+
+        let mut inner_layers = IndexMap::new();
+
+        let mut layer_log_size = 1;
+        for layer in value.inner_layers.iter().rev() {
+            inner_layers.insert(
+                layer_log_size,
+                FriLayerProofVar {
+                    commitment: HashVar::new_variables(cs, &layer.commitment, mode),
+                },
+            );
+            layer_log_size += 1;
         }
-        for _ in inner_layers.len()..MAX_SEQUENCE_LOG_SIZE as usize {
-            inner_layers.push(FriLayerProofVar {
-                commitment: HashVar::new_variables(cs, &Poseidon31Hash::default(), mode),
-            });
+
+        for _ in layer_log_size..=(MAX_SEQUENCE_LOG_SIZE - 1) {
+            inner_layers.insert(
+                layer_log_size,
+                FriLayerProofVar {
+                    commitment: HashVar::new_variables(cs, &Poseidon31Hash::default(), mode),
+                },
+            );
+            layer_log_size += 1;
         }
 
         let last_layer_constant =

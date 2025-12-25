@@ -6,7 +6,7 @@ members = [
     "components/recursive/answer", "components/recursive/folding",
     "cairo-components/hints", "cairo-components/recursive/fiat_shamir", "cairo-components/recursive/data_structures",
     "cairo-components/recursive/composition", "cairo-components/recursive/decommitment",
-    "cairo-components/recursive/answer"
+    "cairo-components/recursive/answer", "cairo-components/recursive/folding"
 ]
 
 [workspace.dependencies]

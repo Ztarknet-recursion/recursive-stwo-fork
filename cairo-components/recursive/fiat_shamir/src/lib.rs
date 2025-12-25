@@ -12,6 +12,7 @@ use circle_plonk_dsl_primitives::{
     channel::ConditionalChannelMixer, BitIntVar, BitVar, BitsVar, ChannelVar, CirclePointQM31Var,
     M31Var, Poseidon2HalfVar, QM31Var,
 };
+use indexmap::IndexMap;
 use stwo::core::{fields::m31::M31, vcs::poseidon31_hash::Poseidon31Hash};
 use stwo_cairo_common::{
     memory::LARGE_MEMORY_VALUE_ID_BASE,
@@ -27,6 +28,9 @@ pub struct CairoFiatShamirResults {
     pub queries: Vec<BitsVar>,
     pub query_log_size: M31Var,
     pub composition_log_size: M31Var,
+
+    pub first_layer_alpha: QM31Var,
+    pub inner_layers_alphas: IndexMap<u32, QM31Var>,
 }
 
 impl CairoFiatShamirResults {
@@ -93,38 +97,37 @@ impl CairoFiatShamirResults {
             max_preprocessed_trace_log_size.max(&max_trace_and_interaction_log_size, 5);
         let composition_log_size = &max_log_size + &M31Var::one(&cs);
 
-        // mix the FRI first layer commitment
         channel.mix_root(&proof.stark_proof.fri_proof.first_layer.commitment);
-        let _first_layer_alpha = channel.draw_felts()[0].clone();
+        let first_layer_alpha = channel.draw_felts()[0].clone();
 
-        // total number of layers = composition_log_size - 1 (first layer is after one reduction) = max_log_size
-        let num_inner_layers = &max_log_size - &M31Var::one(&cs);
-        let mut inner_layer_alphas = vec![];
-        let mut remaining_num_inner_layers = num_inner_layers.clone();
-        for i in 0..(MAX_SEQUENCE_LOG_SIZE - 1) as usize {
-            let is_this_layer_present = remaining_num_inner_layers.is_zero().neg();
-            remaining_num_inner_layers = &remaining_num_inner_layers - &is_this_layer_present.0;
+        let mut num_layers_to_skip =
+            &M31Var::new_constant(&cs, &M31::from(MAX_SEQUENCE_LOG_SIZE)) - &max_log_size;
+
+        let mut inner_layers_alphas = IndexMap::new();
+        for layer_log_size in (1..MAX_SEQUENCE_LOG_SIZE).rev() {
+            let skip = num_layers_to_skip.is_zero().neg();
+            num_layers_to_skip = &num_layers_to_skip - &skip.0;
 
             let existing_channel = channel.digest.to_qm31();
-
-            channel.mix_root(&proof.stark_proof.fri_proof.inner_layers[i].commitment);
-            let inner_layer_alpha = channel.draw_felts()[0].clone();
-            inner_layer_alphas.push(inner_layer_alpha);
+            channel.mix_root(
+                &proof
+                    .stark_proof
+                    .fri_proof
+                    .inner_layers
+                    .get(&layer_log_size)
+                    .unwrap()
+                    .commitment,
+            );
+            let alpha = channel.draw_felts()[0].clone();
+            inner_layers_alphas.insert(layer_log_size, alpha);
 
             let candidate_channel = channel.digest.to_qm31();
 
             let new_digest = [
-                QM31Var::select(
-                    &existing_channel[0],
-                    &candidate_channel[0],
-                    &is_this_layer_present,
-                ),
-                QM31Var::select(
-                    &existing_channel[1],
-                    &candidate_channel[1],
-                    &is_this_layer_present,
-                ),
+                QM31Var::select(&candidate_channel[0], &existing_channel[0], &skip),
+                QM31Var::select(&candidate_channel[1], &existing_channel[1], &skip),
             ];
+
             channel.digest = Poseidon2HalfVar::from_qm31(&new_digest[0], &new_digest[1]);
         }
 
@@ -191,6 +194,9 @@ impl CairoFiatShamirResults {
             queries,
             query_log_size,
             composition_log_size,
+
+            first_layer_alpha,
+            inner_layers_alphas,
         }
     }
 
