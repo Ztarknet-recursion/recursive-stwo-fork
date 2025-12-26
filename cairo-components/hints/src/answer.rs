@@ -4,7 +4,7 @@ use itertools::Itertools;
 use std::cmp::Reverse;
 use stwo::core::{
     fields::qm31::SecureField,
-    pcs::quotients::{PointSample, fri_answers},
+    pcs::quotients::{fri_answers, PointSample},
     vcs::poseidon31_merkle::Poseidon31MerkleHasher,
 };
 
@@ -56,7 +56,8 @@ impl AnswerHints {
             &fiat_shamir_hints.query_positions_per_log_size,
             proof.stark_proof.queried_values.clone(),
             n_columns_per_log_size,
-        ).unwrap();
+        )
+        .unwrap();
 
         let max_query = fiat_shamir_hints
             .query_positions_per_log_size
@@ -110,6 +111,9 @@ mod tests {
         let fiat_shamir_hints = CairoFiatShamirHints::new(&proof);
         let answer_hints = AnswerHints::new(&fiat_shamir_hints, &proof);
 
-        fiat_shamir_hints.fri_verifier.decommit(answer_hints.answers_log_sizes.clone()).unwrap();
+        fiat_shamir_hints
+            .fri_verifier
+            .decommit(answer_hints.answers_log_sizes.clone())
+            .unwrap();
     }
 }

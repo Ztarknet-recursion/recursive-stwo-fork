@@ -4,11 +4,21 @@ use cairo_air::CairoProof;
 use itertools::{zip_eq, Itertools};
 use num_traits::Zero;
 use stwo::core::{
-    circle::Coset, fields::{
-        FieldExpOps, m31::M31, qm31::{QM31, SECURE_EXTENSION_DEGREE, SecureField}
-    }, fri::SparseEvaluation, utils::bit_reverse_index, vcs::{
-        MerkleHasher, poseidon31_hash::Poseidon31Hash, poseidon31_merkle::Poseidon31MerkleHasher, poseidon31_ref::Poseidon31CRH, verifier::{MerkleDecommitment, MerkleVerifier}
-    }
+    circle::Coset,
+    fields::{
+        m31::M31,
+        qm31::{SecureField, QM31, SECURE_EXTENSION_DEGREE},
+        FieldExpOps,
+    },
+    fri::SparseEvaluation,
+    utils::bit_reverse_index,
+    vcs::{
+        poseidon31_hash::Poseidon31Hash,
+        poseidon31_merkle::Poseidon31MerkleHasher,
+        poseidon31_ref::Poseidon31CRH,
+        verifier::{MerkleDecommitment, MerkleVerifier},
+        MerkleHasher,
+    },
 };
 
 use crate::{AnswerHints, CairoFiatShamirHints};
@@ -566,7 +576,6 @@ impl InnerLayersHints {
         }
     }
 }
-
 
 pub struct CairoFoldingHints {}
 

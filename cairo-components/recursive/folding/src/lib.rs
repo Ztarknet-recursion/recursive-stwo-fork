@@ -1,3 +1,1 @@
-pub struct PaddedSinglePairMerkleProofVar {
-    
-}
+pub struct PaddedSinglePairMerkleProofVar {}
