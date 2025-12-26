@@ -28,9 +28,9 @@ pub fn apply_16x16_mds_matrix(state: [M31; 16]) -> [M31; 16] {
         p4.3,
     ];
 
-    let mut state = t.clone();
-    for i in 0..16 {
-        state[i] = state[i].double();
+    let mut state = t;
+    for s in &mut state {
+        *s = s.double();
     }
 
     for i in 0..4 {
@@ -106,40 +106,40 @@ pub fn pow5(a: M31) -> M31 {
 }
 
 pub fn poseidon2_permute(p_state: &mut [M31; 16]) {
-    let mut state = p_state.clone();
+    let mut state = *p_state;
     state = apply_16x16_mds_matrix(state);
 
-    for r in 0..4 {
-        for i in 0..16 {
-            state[i] += FIRST_FOUR_ROUND_RC[r][i];
+    for rc in FIRST_FOUR_ROUND_RC.iter() {
+        for (s, rc_i) in state.iter_mut().zip(rc.iter()) {
+            *s += *rc_i;
         }
-        for i in 0..16 {
-            state[i] = pow5(state[i]);
+        for s in &mut state {
+            *s = pow5(*s);
         }
 
         state = apply_16x16_mds_matrix(state);
     }
 
-    for r in 0..14 {
-        state[0] += PARTIAL_ROUNDS_RC[r];
+    for &rc in PARTIAL_ROUNDS_RC.iter() {
+        state[0] += rc;
         state[0] = pow5(state[0]);
 
         let mut sum = state[0];
-        for i in 1..16 {
-            sum += state[i];
+        for s in state.iter().skip(1) {
+            sum += *s;
         }
 
-        for i in 0..16 {
-            state[i] = sum + state[i] * MAT_DIAG16_M_1[i];
+        for (s, diag) in state.iter_mut().zip(MAT_DIAG16_M_1.iter()) {
+            *s = sum + *s * *diag;
         }
     }
 
-    for r in 0..4 {
-        for i in 0..16 {
-            state[i] += LAST_FOUR_ROUNDS_RC[r][i];
+    for rc in LAST_FOUR_ROUNDS_RC.iter() {
+        for (s, rc_i) in state.iter_mut().zip(rc.iter()) {
+            *s += *rc_i;
         }
-        for i in 0..16 {
-            state[i] = pow5(state[i]);
+        for s in &mut state {
+            *s = pow5(*s);
         }
 
         state = apply_16x16_mds_matrix(state);
@@ -156,8 +156,8 @@ mod tests {
     #[test]
     fn test_poseidon2_permute() {
         let mut state = [M31::zero(); 16];
-        for i in 0..16 {
-            state[i] = M31::from(i);
+        for (i, s) in state.iter_mut().enumerate() {
+            *s = M31::from(i);
         }
 
         poseidon2_permute(&mut state);

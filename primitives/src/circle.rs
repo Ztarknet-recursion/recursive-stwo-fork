@@ -148,7 +148,7 @@ impl CirclePointM31Var {
 
         let mut sum = CirclePointM31Var::new_constant(&cs, &initial);
         for step_var in steps_var.iter() {
-            sum = &sum + &step_var;
+            sum = &sum + step_var;
         }
         sum = sum.conditional_negate(&bits_var.0[0]);
         sum

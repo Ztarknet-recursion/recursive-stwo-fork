@@ -41,7 +41,7 @@ impl AllocVar for CairoInteractionClaimVar {
             ),
             blake_context: BlakeContextInteractionClaimVar::new_variables(
                 cs,
-                &value.blake_context.claim.as_ref().unwrap(),
+                value.blake_context.claim.as_ref().unwrap(),
                 mode,
             ),
             builtins: QM31Var::new_variables(

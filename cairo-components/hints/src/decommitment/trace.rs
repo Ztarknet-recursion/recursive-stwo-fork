@@ -569,8 +569,10 @@ pub fn read_trace(
     );
 
     let mut results = Vec::new();
-    for i in 0..proof.stark_proof.config.fri_config.n_queries {
-        let c = &pad[i];
+    for c in pad
+        .iter()
+        .take(proof.stark_proof.config.fri_config.n_queries)
+    {
         let trace_query_result = allocate_trace_query_result(c);
         results.push(trace_query_result);
     }

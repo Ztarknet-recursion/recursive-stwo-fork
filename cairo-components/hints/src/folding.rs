@@ -60,7 +60,7 @@ impl SinglePairMerkleProof {
                     } else {
                         Some((sibling_hash, self_hash))
                     },
-                    &vec![],
+                    &[],
                 );
                 if i != self.depth - 1 {
                     sibling_hash = self.sibling_hashes[i];
@@ -206,7 +206,7 @@ impl SinglePairMerkleProof {
                 hash_layers.push(hash_layer);
             }
 
-            queries.iter_mut().for_each(|v| *v = (*v) >> 1);
+            queries.iter_mut().for_each(|v| *v >>= 1);
         }
 
         assert!(values_iter.next().is_none());
@@ -337,7 +337,7 @@ impl FirstLayerHints {
                 Self::compute_decommitment_positions_and_rebuild_evals(
                     queries,
                     column_domain.log_size(),
-                    &column_query_evals,
+                    column_query_evals,
                     &mut fri_witness,
                 );
 
@@ -488,7 +488,7 @@ impl CairoFoldingHints {
                 .len()
         );
 
-        let _first_layer_hints = FirstLayerHints::compute(fiat_shamir_hints, answer_hints, &proof);
+        let _first_layer_hints = FirstLayerHints::compute(fiat_shamir_hints, answer_hints, proof);
 
         Self {}
     }

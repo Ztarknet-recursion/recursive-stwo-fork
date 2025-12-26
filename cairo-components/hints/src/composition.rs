@@ -14,7 +14,7 @@ impl CairoCompositionHints {
         fiat_shamir_hints: &CairoFiatShamirHints,
         proof: &CairoProof<Poseidon31MerkleHasher>,
     ) -> Self {
-        let oods_point = fiat_shamir_hints.oods_point.clone();
+        let oods_point = fiat_shamir_hints.oods_point;
         let random_coeff = &fiat_shamir_hints.random_coeff;
         let component_generator = &fiat_shamir_hints.component_generator;
 

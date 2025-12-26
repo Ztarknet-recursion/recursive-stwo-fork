@@ -2,7 +2,6 @@ use stwo::core::fields::m31::M31;
 
 /// Generated using https://github.com/HorizenLabs/poseidon2/blob/main/poseidon2_rust_params.sage
 /// with p = 2^31 - 1 and t = 16
-
 pub static MAT_DIAG16_M_1: [M31; 16] = [
     M31::from_u32_unchecked(3),
     M31::from_u32_unchecked(4),

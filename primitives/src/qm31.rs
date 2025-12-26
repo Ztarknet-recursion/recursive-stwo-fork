@@ -38,16 +38,16 @@ impl AllocVar for QM31Var {
 
     fn new_constant(cs: &ConstraintSystemRef, value: &Self::Value) -> Self {
         if value.is_zero() {
-            return Self::zero(&cs);
+            return Self::zero(cs);
         }
         if value.is_one() {
-            return Self::one(&cs);
+            return Self::one(cs);
         }
         if *value == QM31::from_u32_unchecked(0, 1, 0, 0) {
-            return Self::i(&cs);
+            return Self::i(cs);
         }
         if *value == QM31::from_u32_unchecked(0, 0, 1, 0) {
-            return Self::j(&cs);
+            return Self::j(cs);
         }
 
         let f = format!(

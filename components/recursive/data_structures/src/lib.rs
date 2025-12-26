@@ -174,7 +174,7 @@ impl AllocVar for StarkProofVar {
     fn new_variables(cs: &ConstraintSystemRef, value: &Self::Value, mode: AllocationMode) -> Self {
         let mut commitments = Vec::with_capacity(value.commitments.len());
         for commitment in value.commitments.iter() {
-            commitments.push(HashVar::new_variables(cs, &commitment, mode));
+            commitments.push(HashVar::new_variables(cs, commitment, mode));
         }
 
         let mut sampled_values = TreeVec::new(vec![]);
@@ -286,14 +286,14 @@ impl SinglePathMerkleProofVar {
     pub fn new(cs: &ConstraintSystemRef, value: &SinglePathMerkleProof) -> Self {
         let mut sibling_hashes = vec![];
         for sibling_hash in value.sibling_hashes.iter() {
-            sibling_hashes.push(HashVar::new_single_use_witness_only(&cs, &sibling_hash.0));
+            sibling_hashes.push(HashVar::new_single_use_witness_only(cs, &sibling_hash.0));
         }
 
         let mut columns = BTreeMap::new();
         for (k, v) in value.columns.iter() {
             let mut v_var = vec![];
             for vv in v.iter() {
-                v_var.push(M31Var::new_witness(&cs, vv));
+                v_var.push(M31Var::new_witness(cs, vv));
             }
             columns.insert(*k, v_var);
         }
@@ -316,27 +316,28 @@ impl SinglePathMerkleProofVar {
         assert_eq!(root.value(), self.value.root.0);
         assert_eq!(query.get_value().0, self.value.query as u32);
 
-        let mut cur_hash = Poseidon31MerkleHasherVar::hash_m31_columns_get_rate(
-            &self.columns.get(&self.value.depth).unwrap_or(&vec![]),
-        );
+        let leaf = self
+            .columns
+            .get(&self.value.depth)
+            .map_or(&[][..], |v| v.as_slice());
+        let mut cur_hash = Poseidon31MerkleHasherVar::hash_m31_columns_get_rate(leaf);
 
         for i in 0..self.value.depth {
             let h = self.value.depth - i - 1;
 
             if self.columns.contains_key(&h) {
-                let mut column_hash = Poseidon31MerkleHasherVar::hash_m31_columns_get_capacity(
-                    &self.columns.get(&h).unwrap_or(&vec![]),
-                );
+                let columns = self.columns.get(&h).map_or(&[][..], |v| v.as_slice());
+                let column_hash = Poseidon31MerkleHasherVar::hash_m31_columns_get_capacity(columns);
                 cur_hash = Poseidon31MerkleHasherVar::hash_tree_with_column_hash_with_swap(
-                    &mut cur_hash,
-                    &mut self.sibling_hashes[i],
+                    &cur_hash,
+                    &self.sibling_hashes[i],
                     &query.0[i],
-                    &mut column_hash,
+                    &column_hash,
                 );
             } else {
                 cur_hash = Poseidon31MerkleHasherVar::hash_tree_with_swap(
-                    &mut cur_hash,
-                    &mut self.sibling_hashes[i],
+                    &cur_hash,
+                    &self.sibling_hashes[i],
                     &query.0[i],
                 );
             }
@@ -346,7 +347,7 @@ impl SinglePathMerkleProofVar {
 
         // check that the left_variable and right_variable are the same
         // as though in self.root
-        cur_hash.equalverify(&root);
+        cur_hash.equalverify(root);
     }
 }
 
@@ -371,17 +372,17 @@ impl SinglePairMerkleProofVar {
     pub fn new(cs: &ConstraintSystemRef, value: &SinglePairMerkleProof) -> Self {
         let mut sibling_hashes = vec![];
         for sibling_hash in value.sibling_hashes.iter() {
-            sibling_hashes.push(HashVar::new_single_use_witness_only(&cs, &sibling_hash.0));
+            sibling_hashes.push(HashVar::new_single_use_witness_only(cs, &sibling_hash.0));
         }
 
         let mut self_columns = BTreeMap::new();
         for (k, v) in value.self_columns.iter() {
-            self_columns.insert(*k, QM31Var::new_witness(&cs, &v));
+            self_columns.insert(*k, QM31Var::new_witness(cs, v));
         }
 
         let mut siblings_columns = BTreeMap::new();
         for (k, v) in value.siblings_columns.iter() {
-            siblings_columns.insert(*k, QM31Var::new_witness(&cs, &v));
+            siblings_columns.insert(*k, QM31Var::new_witness(cs, v));
         }
 
         Self {
@@ -418,34 +419,34 @@ impl SinglePairMerkleProofVar {
 
             if !self.self_columns.contains_key(&h) {
                 self_hash = Poseidon31MerkleHasherVar::hash_tree_with_swap(
-                    &mut self_hash,
-                    &mut sibling_hash,
+                    &self_hash,
+                    &sibling_hash,
                     &query.0[i],
                 );
                 if i != self.value.depth - 1 {
                     sibling_hash = self.sibling_hashes[i].clone();
                 }
             } else {
-                let mut self_column_hash =
+                let self_column_hash =
                     Poseidon31MerkleHasherVar::hash_qm31_columns_get_capacity(&[
                         self.self_columns.get(&h).unwrap().clone(),
                         QM31Var::zero(&cs),
                     ]);
-                let mut sibling_column_hash =
+                let sibling_column_hash =
                     Poseidon31MerkleHasherVar::hash_qm31_columns_get_capacity(&[
                         self.siblings_columns.get(&h).unwrap().clone(),
                         QM31Var::zero(&cs),
                     ]);
 
                 self_hash = Poseidon31MerkleHasherVar::hash_tree_with_column_hash_with_swap(
-                    &mut self_hash,
-                    &mut sibling_hash,
+                    &self_hash,
+                    &sibling_hash,
                     &query.0[i],
-                    &mut self_column_hash,
+                    &self_column_hash,
                 );
                 sibling_hash = Poseidon31MerkleHasherVar::combine_hash_tree_with_column(
-                    &mut self.sibling_hashes[i],
-                    &mut sibling_column_hash,
+                    &self.sibling_hashes[i],
+                    &sibling_column_hash,
                 );
             }
         }
@@ -454,7 +455,7 @@ impl SinglePairMerkleProofVar {
 
         // check that the left_variable and right_variable are the same
         // as though in self.root
-        self_hash.equalverify(&root);
+        self_hash.equalverify(root);
     }
 }
 
@@ -544,7 +545,7 @@ mod test {
             .unwrap();
         let proofs = SinglePathMerkleProof::from_stwo_proof(
             max_log_size,
-            &fiat_shamir_hints
+            fiat_shamir_hints
                 .sorted_query_positions_per_log_size
                 .get(&max_log_size)
                 .unwrap(),

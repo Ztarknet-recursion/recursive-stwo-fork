@@ -92,8 +92,8 @@ impl<T: SelectVar> ObliviousMapVar<T> {
         let cs = key.cs();
         let mut session = T::select_start(&cs);
         for (k, v) in self.0.iter() {
-            let bit = key.bitmap.get(&(*k as u32)).unwrap();
-            T::select_add(&mut session, v, &bit);
+            let bit = key.bitmap.get(k).unwrap();
+            T::select_add(&mut session, v, bit);
         }
         T::select_end(session)
     }
@@ -104,7 +104,7 @@ impl SelectVar for M31 {
     type Output = M31Var;
 
     fn select_start(cs: &ConstraintSystemRef) -> Self::SelectSession {
-        M31Var::zero(&cs)
+        M31Var::zero(cs)
     }
 
     fn select_add(session: &mut Self::SelectSession, new: &Self, bit: &BitVar) {
@@ -121,7 +121,7 @@ impl SelectVar for QM31 {
     type Output = QM31Var;
 
     fn select_start(cs: &ConstraintSystemRef) -> Self::SelectSession {
-        QM31Var::zero(&cs)
+        QM31Var::zero(cs)
     }
 
     fn select_add(session: &mut Self::SelectSession, new: &Self, bit: &BitVar) {
@@ -139,7 +139,7 @@ impl SelectVar for M31Var {
     type Output = M31Var;
 
     fn select_start(cs: &ConstraintSystemRef) -> Self::SelectSession {
-        M31Var::zero(&cs)
+        M31Var::zero(cs)
     }
 
     fn select_add(session: &mut Self::SelectSession, new: &Self, bit: &BitVar) {
@@ -156,7 +156,7 @@ impl SelectVar for QM31Var {
     type Output = QM31Var;
 
     fn select_start(cs: &ConstraintSystemRef) -> Self::SelectSession {
-        QM31Var::zero(&cs)
+        QM31Var::zero(cs)
     }
 
     fn select_add(session: &mut Self::SelectSession, new: &Self, bit: &BitVar) {
@@ -191,7 +191,7 @@ impl SelectVar for ChannelVar {
     type Output = ChannelVar;
 
     fn select_start(cs: &ConstraintSystemRef) -> Self::SelectSession {
-        [QM31Var::zero(&cs), QM31Var::zero(&cs)]
+        [QM31Var::zero(cs), QM31Var::zero(cs)]
     }
 
     fn select_add(session: &mut Self::SelectSession, new: &Self, bit: &BitVar) {
@@ -213,7 +213,7 @@ impl SelectVar for CirclePointQM31Var {
     type Output = CirclePointQM31Var;
 
     fn select_start(cs: &ConstraintSystemRef) -> Self::SelectSession {
-        (QM31Var::zero(&cs), QM31Var::zero(&cs))
+        (QM31Var::zero(cs), QM31Var::zero(cs))
     }
 
     fn select_add(session: &mut Self::SelectSession, new: &Self, bit: &BitVar) {

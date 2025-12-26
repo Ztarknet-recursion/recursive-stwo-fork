@@ -1,3 +1,11 @@
+#![allow(clippy::needless_borrow)]
+#![allow(clippy::needless_range_loop)]
+#![allow(clippy::ptr_arg)]
+#![allow(clippy::too_many_arguments)]
+#![allow(clippy::unnecessary_cast)]
+#![allow(clippy::let_and_return)]
+#![allow(clippy::needless_return)]
+
 pub mod data_structures;
 use std::ops::Add;
 

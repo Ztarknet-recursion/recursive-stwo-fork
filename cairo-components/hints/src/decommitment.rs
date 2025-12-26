@@ -206,7 +206,7 @@ impl QueryDecommitmentProof {
                         },
                     );
                 } else {
-                    let layer = layers.get(&(log_size as u32)).unwrap();
+                    let layer = layers.get(&log_size).unwrap();
                     let node = layer.get(&cur).unwrap();
                     nodes.insert(log_size as usize, node.clone());
                     cur >>= 1;
@@ -215,7 +215,7 @@ impl QueryDecommitmentProof {
 
             let proof = QueryDecommitmentProof {
                 query: *query,
-                log_blowup_factor: log_blowup_factor,
+                log_blowup_factor,
                 leaf_values,
                 intermediate_layers: nodes,
             };
@@ -230,10 +230,10 @@ impl QueryDecommitmentProof {
 ///
 /// This is a generic function that can be reused for preprocessed trace, trace, composition, etc.
 pub fn read_query_values_into_pad(
-    log_sizes: &Vec<u32>,
-    queried_values: &Vec<M31>,
-    witness: &Vec<M31>,
-    raw_queries: &Vec<usize>,
+    log_sizes: &[u32],
+    queried_values: &[M31],
+    witness: &[M31],
+    raw_queries: &[usize],
     query_positions_per_log_size: &BTreeMap<u32, Vec<usize>>,
     log_blowup_factor: u32,
     n_queries: usize,

@@ -68,7 +68,7 @@ impl CompositionCheck {
             let mut mask_points = proof
                 .stark_proof
                 .sampled_values
-                .sub_tree(&plonk_tree_subspan);
+                .sub_tree(plonk_tree_subspan);
             mask_points[PREPROCESSED_TRACE_IDX] = preprocessed_mask;
 
             EvalAtRowVar::new(
@@ -90,7 +90,7 @@ impl CompositionCheck {
             let mut mask_points = proof
                 .stark_proof
                 .sampled_values
-                .sub_tree(&poseidon_tree_subspan);
+                .sub_tree(poseidon_tree_subspan);
             mask_points[PREPROCESSED_TRACE_IDX] = preprocessed_mask;
 
             EvalAtRowVar::new(

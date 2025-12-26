@@ -1,3 +1,10 @@
+#![allow(clippy::needless_borrow)]
+#![allow(clippy::too_many_arguments)]
+#![allow(clippy::useless_conversion)]
+#![allow(clippy::unnecessary_cast)]
+#![allow(clippy::let_and_return)]
+#![allow(clippy::needless_return)]
+
 use cairo_air::air::CairoComponents;
 use cairo_plonk_dsl_data_structures::{
     evaluator::PointEvaluationAccumulatorVar, lookup::CairoInteractionElementsVar, CairoProofVar,

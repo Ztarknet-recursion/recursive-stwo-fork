@@ -47,13 +47,13 @@ impl ChannelVar {
 
     pub fn mix_one_felt(&mut self, felt: &QM31Var) {
         let cs = self.cs();
-        let left = Poseidon2HalfVar::from_qm31(&felt, &QM31Var::zero(&cs));
+        let left = Poseidon2HalfVar::from_qm31(felt, &QM31Var::zero(&cs));
         self.digest = Poseidon2HalfVar::permute_get_capacity(&left, &self.digest);
         self.n_sent = 0;
     }
 
     pub fn mix_two_felts(&mut self, felt1: &QM31Var, felt2: &QM31Var) {
-        let left = Poseidon2HalfVar::from_qm31(&felt1, &felt2);
+        let left = Poseidon2HalfVar::from_qm31(felt1, felt2);
         self.digest = Poseidon2HalfVar::permute_get_capacity(&left, &self.digest);
         self.n_sent = 0;
     }
@@ -92,7 +92,7 @@ impl ConditionalChannelMixer {
             is_input_1_occupied = &(&bit.neg() & &is_input_1_occupied) | &should_write_to_input_1;
 
             // permutation should happen if "should_write_to_input_2"
-            let should_permute = &should_write_to_input_2;
+            let should_permute = should_write_to_input_2;
 
             let left = Poseidon2HalfVar::from_qm31(&input_1, &input_2);
             let existing_digest = self.channel.digest.to_qm31();
@@ -108,10 +108,10 @@ impl ConditionalChannelMixer {
         }
 
         for felt in felt.iter().skip(bits.len()) {
-            input_1 = QM31Var::select(&felt, &input_1, &is_input_1_occupied);
+            input_1 = QM31Var::select(felt, &input_1, &is_input_1_occupied);
             input_2 = QM31Var::select(&input_2, felt, &is_input_1_occupied);
 
-            let should_permute = &is_input_1_occupied;
+            let should_permute = is_input_1_occupied.clone();
 
             let left = Poseidon2HalfVar::from_qm31(&input_1, &input_2);
             let existing_digest = self.channel.digest.to_qm31();
@@ -129,7 +129,7 @@ impl ConditionalChannelMixer {
         }
 
         // deal with the case where is_input_1_occupied is true
-        let should_permute = &is_input_1_occupied;
+        let should_permute = is_input_1_occupied;
         let left = Poseidon2HalfVar::from_qm31(&input_1, &QM31Var::zero(&self.channel.cs()));
         let existing_digest = self.channel.digest.to_qm31();
         let candidate_digest =

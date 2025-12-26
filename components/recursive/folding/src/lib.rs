@@ -49,7 +49,7 @@ impl FoldingResults {
             {
                 let a = proofs[i].self_columns.get(&(log_size as usize)).unwrap();
                 let b = fri_answer;
-                a.equalverify(&b);
+                a.equalverify(b);
             }
         }
 
@@ -67,8 +67,7 @@ impl FoldingResults {
                 let point = query.get_absolute_point().double();
                 let y_inv = point.y.inv();
 
-                let (left_val, right_val) =
-                    QM31Var::swap(&self_val, &sibling_val, &query.bits.0[0]);
+                let (left_val, right_val) = QM31Var::swap(self_val, sibling_val, &query.bits.0[0]);
 
                 let new_left_val = &left_val + &right_val;
                 let new_right_val = &(&left_val - &right_val) * &y_inv;
@@ -88,7 +87,7 @@ impl FoldingResults {
         for (log_size, folded_evals) in first_layer_hints.folded_evals_by_column.iter() {
             let folded_queries = fiat_shamir_hints
                 .unsorted_query_positions_per_log_size
-                .get(&log_size)
+                .get(log_size)
                 .unwrap()
                 .iter()
                 .map(|v| v >> 1)
@@ -107,9 +106,9 @@ impl FoldingResults {
 
             for (query, val) in folded_queries
                 .iter()
-                .zip(folded_results.get(&log_size).unwrap().iter())
+                .zip(folded_results.get(log_size).unwrap().iter())
             {
-                let left = results_from_hints.get(&query).unwrap();
+                let left = results_from_hints.get(query).unwrap();
                 let right = &val.value();
                 assert_eq!(left, right);
             }
@@ -156,7 +155,7 @@ impl FoldingResults {
                     .siblings_columns
                     .get(&(log_size as usize))
                     .unwrap();
-                folded_result.equalverify(&self_val);
+                folded_result.equalverify(self_val);
 
                 // Note: left_query was previously used but is no longer needed
                 // The swap operation now directly uses query.bits
@@ -164,8 +163,7 @@ impl FoldingResults {
                 let point = query.get_absolute_point();
                 let x_inv = point.x.inv();
 
-                let (left_val, right_val) =
-                    QM31Var::swap(&self_val, &sibling_val, &query.bits.0[0]);
+                let (left_val, right_val) = QM31Var::swap(self_val, sibling_val, &query.bits.0[0]);
 
                 let new_left_val = &left_val + &right_val;
                 let new_right_val = &(&left_val - &right_val) * &x_inv;

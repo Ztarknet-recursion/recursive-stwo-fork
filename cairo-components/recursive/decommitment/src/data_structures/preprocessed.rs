@@ -572,10 +572,8 @@ impl PreprocessedTraceQueryResultVar {
         );
 
         let cs = self.cs();
-        let map = map
-            .into_iter()
+        map.into_iter()
             .map(|(k, v)| (k, OptionVar::some(&cs, v)))
-            .collect();
-        map
+            .collect()
     }
 }

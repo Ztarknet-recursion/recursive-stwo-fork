@@ -145,12 +145,12 @@ impl QueryDecommitmentProofVar {
                         QM31Var::select(
                             &case_without_column[0],
                             &case_with_column[0],
-                            &is_hash_column_present,
+                            is_hash_column_present,
                         ),
                         QM31Var::select(
                             &case_without_column[1],
                             &case_with_column[1],
-                            &is_hash_column_present,
+                            is_hash_column_present,
                         ),
                     ];
                 }

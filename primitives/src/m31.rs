@@ -36,10 +36,10 @@ impl AllocVar for M31Var {
 
     fn new_constant(cs: &ConstraintSystemRef, value: &Self::Value) -> Self {
         if value.is_zero() {
-            return Self::zero(&cs);
+            return Self::zero(cs);
         }
         if value.is_one() {
-            return Self::one(&cs);
+            return Self::one(cs);
         }
 
         let exist = cs.get_cache(format!("m31 {}", value.0));
@@ -238,7 +238,7 @@ impl M31Var {
         let bits = crate::BitsVar::from_m31(&v, log_size + 1);
         let is_lhs_no_less_than_rhs = &bits.0[log_size];
 
-        M31Var::select(rhs, self, &is_lhs_no_less_than_rhs)
+        M31Var::select(rhs, self, is_lhs_no_less_than_rhs)
     }
 }
 

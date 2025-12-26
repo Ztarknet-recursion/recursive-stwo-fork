@@ -36,7 +36,7 @@ impl<T: Var + AllocVar> OptionVar<T> {
     pub fn some(cs: &ConstraintSystemRef, value: T) -> Self {
         Self {
             is_some: BitVar::new_true(cs),
-            value: value,
+            value,
         }
     }
 

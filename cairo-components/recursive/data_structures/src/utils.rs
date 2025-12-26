@@ -6,8 +6,7 @@ use crate::BitIntVar;
 pub fn split_f252_memory_var(value: &[BitIntVar<32>; 8]) -> [M31Var; N_M31_IN_FELT252] {
     let bits = value
         .iter()
-        .map(|v| v.bits.0.clone())
-        .flatten()
+        .flat_map(|v| v.bits.0.clone())
         .collect::<Vec<BitVar>>();
 
     let res: [M31Var; N_M31_IN_FELT252] = std::array::from_fn(|i| {

@@ -23,7 +23,7 @@ impl QueryPositionsPerLogSizeVar {
         let mut elems = vec![];
         for raw_query in raw_queries {
             elems.push(PointCarryingQueryVar::new(
-                BitsVar::from_m31(&raw_query, 31).index_range(0..max_degree as usize),
+                BitsVar::from_m31(raw_query, 31).index_range(0..max_degree as usize),
             ));
         }
         let mut points = BTreeMap::new();
@@ -72,7 +72,7 @@ impl PointCarryingQueryVar {
         let combs = steps
             .iter()
             .zip(bits.0[1..].iter().rev())
-            .map(|(step, bit_var)| (step.clone(), bit_var.clone()))
+            .map(|(step, bit_var)| (*step, bit_var.clone()))
             .collect_vec();
 
         let mut cur = CirclePointM31Var::new_constant(&cs, &initial);
@@ -83,8 +83,8 @@ impl PointCarryingQueryVar {
                 cur = &point + &cur;
             } else {
                 let p00 = CirclePoint::<M31>::zero();
-                let p01 = chunk[0].0.clone();
-                let p10 = chunk[1].0.clone();
+                let p01 = chunk[0].0;
+                let p10 = chunk[1].0;
                 let p11 = p01 + p10;
 
                 let bit0_value = chunk[0].1 .0.value.0 != 0;

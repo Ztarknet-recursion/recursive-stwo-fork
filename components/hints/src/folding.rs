@@ -56,7 +56,7 @@ impl SinglePairMerkleProof {
                     } else {
                         Some((sibling_hash, self_hash))
                     },
-                    &vec![],
+                    &[],
                 );
                 if i != self.depth - 1 {
                     sibling_hash = self.sibling_hashes[i];
@@ -202,7 +202,7 @@ impl SinglePairMerkleProof {
                 hash_layers.push(hash_layer);
             }
 
-            queries.iter_mut().for_each(|v| *v = (*v) >> 1);
+            queries.iter_mut().for_each(|v| *v >>= 1);
         }
 
         assert!(values_iter.next().is_none());
@@ -337,7 +337,7 @@ impl FirstLayerHints {
                 Self::compute_decommitment_positions_and_rebuild_evals(
                     queries,
                     column_domain.log_size(),
-                    &column_query_evals,
+                    column_query_evals,
                     &mut fri_witness,
                 );
 
@@ -397,7 +397,7 @@ impl FirstLayerHints {
         let merkle_proofs = SinglePairMerkleProof::from_stwo_proof(
             &log_sizes_with_data,
             proof.stark_proof.fri_proof.first_layer.commitment,
-            &fiat_shamir_hints
+            fiat_shamir_hints
                 .unsorted_query_positions_per_log_size
                 .get(&fiat_shamir_hints.max_first_layer_column_log_size)
                 .unwrap(),
@@ -527,8 +527,7 @@ impl InnerLayersHints {
             let decommitment_positions = decommitmented.keys().copied().collect_vec();
             let decommitmented_values = decommitmented
                 .values()
-                .map(|v| v.to_m31_array())
-                .flatten()
+                .flat_map(|v| v.to_m31_array())
                 .collect_vec();
 
             let merkle_verifier: MerkleVerifier<Poseidon31MerkleHasher> = MerkleVerifier::new(
@@ -545,7 +544,7 @@ impl InnerLayersHints {
 
             let merkle_proofs = SinglePairMerkleProof::from_stwo_proof(
                 &BTreeSet::from([log_size]),
-                inner_layer.commitment.clone(),
+                inner_layer.commitment,
                 &fiat_shamir_hints
                     .unsorted_query_positions_per_log_size
                     .get(&fiat_shamir_hints.max_first_layer_column_log_size)
@@ -581,7 +580,7 @@ impl InnerLayersHints {
                 let n = values.len();
                 assert_eq!(n, 1 << folding_factors.len());
                 if n == 1 {
-                    return values[0].into();
+                    return values[0];
                 }
                 let (lhs_values, rhs_values) = values.split_at(n / 2);
                 let (folding_factor, folding_factors) = folding_factors.split_first().unwrap();
