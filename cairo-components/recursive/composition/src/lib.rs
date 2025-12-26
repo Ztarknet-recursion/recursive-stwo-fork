@@ -17,6 +17,7 @@ use stwo::core::{
     fields::{m31::M31, qm31::SECURE_EXTENSION_DEGREE},
     poly::circle::CanonicCoset,
 };
+use stwo_cairo_common::preprocessed_columns::preprocessed_trace::MAX_SEQUENCE_LOG_SIZE;
 use stwo_cairo_common::prover_types::simd::LOG_N_LANES;
 use stwo_constraint_framework::{FrameworkComponent, FrameworkEval, PREPROCESSED_TRACE_IDX};
 
@@ -32,7 +33,9 @@ pub static COSET_SHIFT_MAP: OnceLock<ObliviousMapVar<(M31, M31)>> = OnceLock::ne
 
 fn initialize_coset_shift_map() -> ObliviousMapVar<(M31, M31)> {
     let mut map = IndexMap::new();
-    for i in 1..=24 {
+    // IMPORTANT: keys must match `LogSizeVar::bitmap` domain, i.e.
+    // `LOG_N_LANES..=MAX_SEQUENCE_LOG_SIZE`. Otherwise `ObliviousMapVar::select` will panic.
+    for i in LOG_N_LANES..=MAX_SEQUENCE_LOG_SIZE {
         let coset = CanonicCoset::new(i).coset;
         let point = -coset.initial + coset.step_size.half().to_point();
         map.insert(i, (point.x, point.y));
@@ -53,10 +56,14 @@ pub fn coset_vanishing_var(p: &CirclePointQM31Var, coset_log_size: &LogSizeVar) 
     let mut x = (p + &shift_point).x;
 
     let mut map = IndexMap::new();
-    for i in 1..24 {
+    // Build x-doublings up to MAX, but only store keys that are selectable via `LogSizeVar`.
+    for i in 1..MAX_SEQUENCE_LOG_SIZE {
         let sq = &x * &x;
         x = &(&sq + &sq) - &M31Var::one(&cs);
-        map.insert(i + 1, x.clone());
+        let log_size = i + 1;
+        if log_size >= LOG_N_LANES {
+            map.insert(log_size, x.clone());
+        }
     }
 
     let omap = ObliviousMapVar::new(map);
