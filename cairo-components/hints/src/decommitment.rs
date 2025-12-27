@@ -75,6 +75,8 @@ impl QueryDecommitmentProof {
         let max_log_size = *merkle_verifier.column_log_sizes.iter().max().unwrap();
         let max_effective_log_size = *queries_per_log_size.keys().max().unwrap();
 
+        println!("max_log_size = {}, max_effective_log_size = {}", max_log_size, max_effective_log_size);
+
         let mut queried_values = queried_values.into_iter();
         let mut hash_witness = decommitment.hash_witness.into_iter();
         let mut column_witness = decommitment.column_witness.into_iter();
@@ -185,7 +187,6 @@ impl QueryDecommitmentProof {
                 if max_log_size > max_effective_log_size {
                     vec![]
                 } else {
-                    cur >>= 1;
                     layers
                         .get(&max_log_size)
                         .unwrap()
@@ -196,7 +197,7 @@ impl QueryDecommitmentProof {
                 }
             };
 
-            for log_size in (0..max_log_size).rev() {
+            for log_size in (0..=max_log_size).rev() {
                 if log_size <= max_effective_log_size {
                     let layer = layers.get(&log_size).unwrap();
                     let node = layer.get(&cur).unwrap();

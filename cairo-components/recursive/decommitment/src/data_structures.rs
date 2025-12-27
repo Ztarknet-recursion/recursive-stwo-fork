@@ -52,22 +52,9 @@ impl AllocVar for QueryDecommitmentProofVar {
                 ),
             );
         }
-        let mut query: usize = value.query;
         for (log_size, node) in value.intermediate_layers.iter() {
-            println!(
-                "log_size = {}, query = {}, bit = {}",
-                log_size,
-                query,
-                query % 2 != 0
-            );
-            let (cur, sibling) = if query % 2 == 0 {
-                (node.children.0, node.children.1)
-            } else {
-                (node.children.1, node.children.0)
-            };
-            let layer = AllocVar::new_variables(cs, &(cur, sibling), mode);
+            let layer = AllocVar::new_variables(cs, &node.children, mode);
             intermediate_layers.insert(*log_size, layer);
-            query >>= 1;
         }
         Self {
             cs: cs.clone(),
@@ -117,24 +104,17 @@ impl QueryDecommitmentProofVar {
                     &M31::from(log_size as i32 + 1 - log_blowup_factor as i32),
                 ));
 
-            println!(
-                "log_size = {}, query = {},
-            query_bits.0[0] = {}, 
-            is_layer_included = {}, is_layer_present = {}",
-                log_size,
-                query_bits.get_value().0,
-                query_bits.0[0].value(),
-                is_layer_included.value(),
-                is_layer_present.value()
-            );
+            let left = layer.0.to_qm31();
+            let right = layer.1.to_qm31();
 
-            let target = layer.0.to_qm31();
+            let target = [
+                QM31Var::select(&left[0], &right[0], &query_bits.0[0]),
+                QM31Var::select(&left[1], &right[1], &query_bits.0[0]),
+            ];
             let check = [
                 QM31Var::select(&target[0], &expected_hash[0], &is_layer_included),
                 QM31Var::select(&target[1], &expected_hash[1], &is_layer_included),
             ];
-
-            let swap_bit: BitVar = query_bits.0[0].clone();
 
             let mut shifted_bits = query_bits.0[1..].to_vec();
             shifted_bits.push(BitVar::new_false(&cs));
@@ -147,10 +127,8 @@ impl QueryDecommitmentProofVar {
                 Some(hash_column) => {
                     let is_hash_column_present = &hash_column.is_some;
 
-                    let case_without_column = Poseidon31MerkleHasherVar::hash_tree_with_swap(
-                        &layer.0, &layer.1, &swap_bit,
-                    )
-                    .to_qm31();
+                    let case_without_column =
+                        Poseidon31MerkleHasherVar::hash_tree(&layer.0, &layer.1).to_qm31();
 
                     let tree_hash = [
                         &case_without_column[0] * &is_layer_present.0,
@@ -177,26 +155,24 @@ impl QueryDecommitmentProofVar {
                     ];
                 }
                 None => {
-                    expected_hash = Poseidon31MerkleHasherVar::hash_tree_with_swap(
-                        &layer.0, &layer.1, &swap_bit,
-                    )
-                    .to_qm31();
+                    expected_hash =
+                        Poseidon31MerkleHasherVar::hash_tree(&layer.0, &layer.1).to_qm31();
                 }
             }
         }
 
         for log_size in 0..log_blowup_factor as usize {
             let layer = self.intermediate_layers.get(&log_size).unwrap();
-            let target = layer.0.to_qm31();
+            let left = layer.0.to_qm31();
+            let right = layer.1.to_qm31();
+            let target = [
+                QM31Var::select(&left[0], &right[0], &query_bits.0[0]),
+                QM31Var::select(&left[1], &right[1], &query_bits.0[0]),
+            ];
             target[0].equalverify(&expected_hash[0]);
             target[1].equalverify(&expected_hash[1]);
 
-            expected_hash = Poseidon31MerkleHasherVar::hash_tree_with_swap(
-                &layer.0,
-                &layer.1,
-                &query_bits.0[0],
-            )
-            .to_qm31();
+            expected_hash = Poseidon31MerkleHasherVar::hash_tree(&layer.0, &layer.1).to_qm31();
 
             query_bits.0.remove(0);
         }
