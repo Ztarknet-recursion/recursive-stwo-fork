@@ -37,7 +37,7 @@ impl ConstraintSystemRef {
     }
 
     pub fn get_value(&self, idx: usize) -> QM31 {
-        self.0.borrow().variables[idx].clone()
+        self.0.borrow().variables[idx]
     }
 
     pub fn get_cache(&self, str: impl ToString) -> Option<usize> {
@@ -130,6 +130,12 @@ impl ConstraintSystemRef {
 
     pub fn assemble_poseidon_gate(&self, a_wire: usize, b_wire: usize) -> usize {
         self.0.borrow_mut().assemble_poseidon_gate(a_wire, b_wire)
+    }
+}
+
+impl Default for ConstraintSystemRef {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

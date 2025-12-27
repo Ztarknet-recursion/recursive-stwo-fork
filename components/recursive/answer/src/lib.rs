@@ -211,7 +211,7 @@ impl AnswerResults {
             );
         }
 
-        let mut decommitment_var = DecommitmentVar::new(&cs, &decommit_hints);
+        let mut decommitment_var = DecommitmentVar::new(&cs, decommit_hints);
         for (i, query) in query_positions_per_log_size[*fiat_shamir_hints.trees_log_sizes[0]
             .iter()
             .max()
@@ -263,28 +263,28 @@ impl AnswerResults {
             for (i, _) in query_positions_per_log_size[log_size].iter().enumerate() {
                 let mut v = vec![];
                 v.extend_from_slice(
-                    &decommitment_var.precomputed_proofs[i]
+                    decommitment_var.precomputed_proofs[i]
                         .columns
                         .get(&(log_size as usize))
-                        .unwrap_or(&vec![]),
+                        .map_or(&[][..], |cols| cols.as_slice()),
                 );
                 v.extend_from_slice(
-                    &decommitment_var.trace_proofs[i]
+                    decommitment_var.trace_proofs[i]
                         .columns
                         .get(&(log_size as usize))
-                        .unwrap_or(&vec![]),
+                        .map_or(&[][..], |cols| cols.as_slice()),
                 );
                 v.extend_from_slice(
-                    &decommitment_var.interaction_proofs[i]
+                    decommitment_var.interaction_proofs[i]
                         .columns
                         .get(&(log_size as usize))
-                        .unwrap_or(&vec![]),
+                        .map_or(&[][..], |cols| cols.as_slice()),
                 );
                 v.extend_from_slice(
-                    &decommitment_var.composition_proofs[i]
+                    decommitment_var.composition_proofs[i]
                         .columns
                         .get(&(log_size as usize))
-                        .unwrap_or(&vec![]),
+                        .map_or(&[][..], |cols| cols.as_slice()),
                 );
                 queried_values_this_log_size.push(v);
             }
@@ -371,7 +371,7 @@ impl AnswerResults {
             let domain_point = query_position.get_next_point();
             quotient_evals_at_queries.push(accumulate_row_quotients_var(
                 &sample_batches,
-                &queried_values_at_row,
+                queried_values_at_row,
                 &quotient_constants,
                 &domain_point,
             ));

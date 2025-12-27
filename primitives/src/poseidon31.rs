@@ -31,7 +31,7 @@ impl Poseidon2HalfVar {
     pub fn new_single_use_witness_only(cs: &ConstraintSystemRef, value: &[M31; 8]) -> Self {
         Self {
             cs: cs.clone(),
-            value: value.clone(),
+            value: *value,
             left_variable: 0,
             right_variable: 0,
             sel_value: 0,
@@ -42,8 +42,8 @@ impl Poseidon2HalfVar {
         assert_eq!(slice.len(), 8);
 
         let mut cs = slice[0].cs.clone();
-        for i in 1..8 {
-            cs = cs.and(&slice[i].cs);
+        for item in slice.iter().take(8).skip(1) {
+            cs = cs.and(&item.cs);
         }
 
         let left = QM31Var::from_m31(&slice[0], &slice[1], &slice[2], &slice[3]);
@@ -138,6 +138,7 @@ impl Poseidon2HalfVar {
     }
 
     pub fn to_qm31(&self) -> [QM31Var; 2] {
+        assert!(self.sel_value != 0, "this is a single-use witness");
         let cs = self.cs();
         [
             QM31Var {

@@ -46,7 +46,12 @@ impl AnswerHints {
             .flatten()
             .sorted_by_key(|log_size| Reverse(*log_size))
             .dedup()
-            .filter(|log_size| fiat_shamir_hints.query_positions_per_log_size.get(log_size) != None)
+            .filter(|log_size| {
+                fiat_shamir_hints
+                    .query_positions_per_log_size
+                    .contains_key(log_size)
+            })
+            .copied()
             .collect_vec();
 
         let answers_log_sizes = fri_answers(
@@ -69,18 +74,18 @@ impl AnswerHints {
         for raw_query in fiat_shamir_hints.raw_queries.iter() {
             let mut map = IndexMap::new();
             for (log_size, answer) in log_sizes.iter().zip(answers_log_sizes.iter()) {
-                let query_position = raw_query >> (*max_query - **log_size);
+                let query_position = raw_query >> (*max_query - *log_size);
 
                 let queries_for_log_size = fiat_shamir_hints
                     .query_positions_per_log_size
-                    .get(&log_size)
+                    .get(log_size)
                     .unwrap();
 
                 let loc = queries_for_log_size
                     .iter()
                     .position(|q| *q == query_position)
                     .unwrap();
-                map.insert(**log_size, answer[loc]);
+                map.insert(*log_size, answer[loc]);
             }
             queries_answers.push(map);
         }

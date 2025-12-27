@@ -97,6 +97,8 @@ impl CairoFiatShamirResults {
             max_preprocessed_trace_log_size.max(&max_trace_and_interaction_log_size, 5);
         let composition_log_size = &max_log_size + &M31Var::one(&cs);
 
+        println!("max_log_size: {:?}", max_log_size.value);
+
         channel.mix_root(&proof.stark_proof.fri_proof.first_layer.commitment);
         let first_layer_alpha = channel.draw_felts()[0].clone();
 
@@ -139,7 +141,7 @@ impl CairoFiatShamirResults {
         proof.stark_proof.proof_of_work.mix_into(&mut channel);
 
         let lower_bits = BitsVar::from_m31(&channel.digest.to_qm31()[0].decompose_m31()[0], 31)
-            .compose_range(0..26 as usize); // hardcoded pow_bits of 26
+            .compose_range(0..26); // hardcoded pow_bits of 26
         lower_bits.equalverify(&M31Var::zero(&cs));
 
         let query_log_size = composition_log_size.clone(); // when the log_blowup_factor is 1
@@ -171,11 +173,11 @@ impl CairoFiatShamirResults {
         }
 
         let mut queries = vec![];
-        for i in 0..raw_queries.len() {
-            let mut bits = BitsVar::from_m31(&raw_queries[i], 31);
+        for raw_query in raw_queries.iter() {
+            let mut bits = BitsVar::from_m31(raw_query, 31);
             bits.0.truncate(max_len);
-            for j in 0..max_len {
-                bits.0[j] = &bits.0[j] & &mask[j];
+            for (bit, mask_bit) in bits.0.iter_mut().zip(mask.iter()) {
+                *bit = &*bit & mask_bit;
             }
             queries.push(bits);
         }
@@ -220,7 +222,7 @@ impl CairoFiatShamirResults {
             let start_ptr_bits = &segment_ranges.output.start_ptr.value.bits;
             let stop_ptr_bits = &segment_ranges.output.stop_ptr.value.bits;
             start_ptr_bits
-                .is_greater_than(&stop_ptr_bits)
+                .is_greater_than(stop_ptr_bits)
                 .equalverify(&BitVar::new_false(&start_ptr_bits.cs()));
         }
 
@@ -234,7 +236,7 @@ impl CairoFiatShamirResults {
             let start_ptr_bits = &start_ptr.bits;
             let stop_ptr_bits = &stop_ptr.bits;
             start_ptr_bits
-                .is_greater_than(&stop_ptr_bits)
+                .is_greater_than(stop_ptr_bits)
                 .equalverify(&BitVar::new_false(&start_ptr_bits.cs()));
 
             let segment_end =
@@ -271,7 +273,7 @@ impl CairoFiatShamirResults {
 
         let final_ap_bits = &final_ap.bits;
         initial_ap_bits
-            .is_greater_than(&final_ap_bits)
+            .is_greater_than(final_ap_bits)
             .equalverify(&BitVar::new_false(&initial_ap_bits.cs()));
 
         // check that the relation uses do not overflow PRIME

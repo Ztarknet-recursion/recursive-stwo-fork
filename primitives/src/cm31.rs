@@ -41,13 +41,13 @@ impl AllocVar for CM31Var {
 
     fn new_constant(cs: &ConstraintSystemRef, value: &Self::Value) -> Self {
         if value.is_zero() {
-            return Self::zero(&cs);
+            return Self::zero(cs);
         }
         if value.is_one() {
-            return Self::one(&cs);
+            return Self::one(cs);
         }
         if *value == CM31(M31::zero(), M31::one()) {
-            return Self::i(&cs);
+            return Self::i(cs);
         }
 
         let f = format!("cm31 {},{}", value.0 .0, value.1 .0);
@@ -240,8 +240,7 @@ impl CM31Var {
     pub fn inv(&self) -> CM31Var {
         let cs = self.cs();
         let value = self.value.inverse();
-        let res = CM31Var::new_witness(&cs, &value);
-        res
+        CM31Var::new_witness(&cs, &value)
     }
 
     pub fn shift_by_i(&self) -> CM31Var {

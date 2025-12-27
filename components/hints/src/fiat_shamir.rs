@@ -109,7 +109,7 @@ impl<MC: MerkleChannel> FiatShamirHints<MC> {
                 BaseField,
                 SecureField,
             >>::combine_ef(
-                &lookup_elements, &[val.clone(), QM31::from(*idx as u32)]
+                &lookup_elements, &[*val, QM31::from(*idx as u32)]
             );
             input_sum += sum.inverse();
         }
@@ -247,7 +247,7 @@ impl<MC: MerkleChannel> FiatShamirHints<MC> {
                     log_size,
                     queries
                         .iter()
-                        .map(|x| (x >> (max_first_layer_column_log_size - log_size)) as usize)
+                        .map(|x| *x >> (max_first_layer_column_log_size - log_size))
                         .collect_vec(),
                 );
             }

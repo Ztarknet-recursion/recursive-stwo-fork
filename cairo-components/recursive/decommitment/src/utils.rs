@@ -77,12 +77,21 @@ impl HashAccumulatorVar {
             QM31Var::select(&self.digest[1], &new_digest[1], &has_at_least_8_elements),
         ];
         self.refresh_counter = 0;
-        for i in 0..16 {
-            self.size[i] = BitVar::select(&self.size[i], &new_size[i], &has_at_least_8_elements);
+        let old_size = self.size.clone();
+        for (dst, (old, new)) in self
+            .size
+            .iter_mut()
+            .zip(old_size.iter().zip(new_size.iter()))
+        {
+            *dst = BitVar::select(old, new, &has_at_least_8_elements);
         }
-        for i in 0..16 {
-            self.buffer[i] =
-                M31Var::select(&self.buffer[i], &new_buffer[i], &has_at_least_8_elements);
+        let old_buffer = self.buffer.clone();
+        for (dst, (old, new)) in self
+            .buffer
+            .iter_mut()
+            .zip(old_buffer.iter().zip(new_buffer.iter()))
+        {
+            *dst = M31Var::select(old, new, &has_at_least_8_elements);
         }
     }
 
@@ -92,9 +101,10 @@ impl HashAccumulatorVar {
         let mut buffer = self.buffer.clone();
         let mut clear = BitVar::new_false(&self.cs);
         let zero = M31Var::zero(&self.cs);
-        for i in 1..16 {
-            clear = &clear | &self.size[i];
-            buffer[i] = M31Var::select(&buffer[i], &zero, &clear);
+        for (size_bit, buf_elem) in self.size.iter().skip(1).zip(buffer.iter_mut().skip(1)) {
+            clear = &clear | size_bit;
+            let old = buf_elem.clone();
+            *buf_elem = M31Var::select(&old, &zero, &clear);
         }
 
         let left = Poseidon2HalfVar::from_m31(&buffer[0..8]);
@@ -113,10 +123,10 @@ impl HashAccumulatorVar {
         }
 
         let mut size_var = M31Var::zero(&self.cs);
-        for i in 1..=7 {
-            size_var = &size_var + &self.size[i].0.mul_constant(M31::from(i as u32));
+        for (i, bit) in self.size.iter().enumerate().take(8).skip(1) {
+            size_var = &size_var + &bit.0.mul_constant(M31::from(i as u32));
         }
-        let size = size_var.value.0 as u32;
+        let size = size_var.value.0;
         let digest = [self.digest[0].value(), self.digest[1].value()];
         let buffer = std::array::from_fn(|i| self.buffer[i].value);
 
@@ -137,15 +147,19 @@ impl HashAccumulatorVar {
 
     pub fn equalverify(&self, rhs: &HashAccumulatorVar) {
         let mut ignore = BitVar::new_false(&self.cs);
-        for i in 0..16 {
-            ignore = &ignore | &self.size[i];
-            let test = M31Var::select(&self.buffer[i], &rhs.buffer[i], &ignore);
-            rhs.buffer[i].equalverify(&test);
+        for (size_bit, (lhs_buf, rhs_buf)) in self
+            .size
+            .iter()
+            .zip(self.buffer.iter().zip(rhs.buffer.iter()))
+        {
+            ignore = &ignore | size_bit;
+            let test = M31Var::select(lhs_buf, rhs_buf, &ignore);
+            rhs_buf.equalverify(&test);
         }
         self.digest[0].equalverify(&rhs.digest[0]);
         self.digest[1].equalverify(&rhs.digest[1]);
-        for i in 0..16 {
-            self.size[i].0.equalverify(&rhs.size[i].0);
+        for (a, b) in self.size.iter().zip(rhs.size.iter()) {
+            a.0.equalverify(&b.0);
         }
     }
 }
@@ -220,14 +234,14 @@ impl HashAccumulatorCompressedVar {
         });
 
         let mut one_hot = size[0].0.clone();
-        for i in 1..=7 {
-            one_hot = &one_hot + &size[i].0;
+        for bit in size.iter().take(8).skip(1) {
+            one_hot = &one_hot + &bit.0;
         }
         one_hot.equalverify(&M31Var::one(&cs));
 
         let mut size_var = M31Var::zero(&cs);
-        for i in 1..=7 {
-            size_var = &size_var + &size[i].0.mul_constant(M31::from(i as u32));
+        for (i, bit) in size.iter().enumerate().take(8).skip(1) {
+            size_var = &size_var + &bit.0.mul_constant(M31::from(i as u32));
         }
 
         let digest = [
@@ -249,8 +263,8 @@ impl HashAccumulatorCompressedVar {
         let left = Poseidon2HalfVar::from_m31(&state);
         let right = Poseidon2HalfVar::from_qm31(&digest[0], &digest[1]);
         let expected_digest = Poseidon2HalfVar::permute_get_capacity(&left, &right).to_qm31();
-        for i in 0..2 {
-            self.compressed_digest[i].equalverify(&expected_digest[i]);
+        for (lhs, rhs) in self.compressed_digest.iter().zip(expected_digest.iter()) {
+            lhs.equalverify(rhs);
         }
 
         HashAccumulatorVar {
@@ -335,12 +349,21 @@ impl HashAccumulatorQM31Var {
             QM31Var::select(&self.digest[1], &new_digest[1], &has_at_least_2_elements),
         ];
         self.refresh_counter = 0;
-        for i in 0..4 {
-            self.size[i] = BitVar::select(&self.size[i], &new_size[i], &has_at_least_2_elements);
+        let old_size = self.size.clone();
+        for (dst, (old, new)) in self
+            .size
+            .iter_mut()
+            .zip(old_size.iter().zip(new_size.iter()))
+        {
+            *dst = BitVar::select(old, new, &has_at_least_2_elements);
         }
-        for i in 0..4 {
-            self.buffer[i] =
-                QM31Var::select(&self.buffer[i], &new_buffer[i], &has_at_least_2_elements);
+        let old_buffer = self.buffer.clone();
+        for (dst, (old, new)) in self
+            .buffer
+            .iter_mut()
+            .zip(old_buffer.iter().zip(new_buffer.iter()))
+        {
+            *dst = QM31Var::select(old, new, &has_at_least_2_elements);
         }
     }
 
@@ -350,9 +373,10 @@ impl HashAccumulatorQM31Var {
         let mut buffer = self.buffer.clone();
         let mut clear = BitVar::new_false(&self.cs);
         let zero = QM31Var::zero(&self.cs);
-        for i in 1..4 {
-            clear = &clear | &self.size[i];
-            buffer[i] = QM31Var::select(&buffer[i], &zero, &clear);
+        for (size_bit, buf_elem) in self.size.iter().skip(1).zip(buffer.iter_mut().skip(1)) {
+            clear = &clear | size_bit;
+            let old = buf_elem.clone();
+            *buf_elem = QM31Var::select(&old, &zero, &clear);
         }
 
         let left = Poseidon2HalfVar::from_qm31(&buffer[0], &buffer[1]);
@@ -371,7 +395,7 @@ impl HashAccumulatorQM31Var {
         }
 
         let size_var = self.size[1].0.clone();
-        let size = size_var.value.0 as u32;
+        let size = size_var.value.0;
         let digest = [self.digest[0].value(), self.digest[1].value()];
         let buffer = std::array::from_fn(|i| self.buffer[i].value);
 
@@ -490,8 +514,8 @@ impl HashAccumulatorQM31CompressedVar {
         let left = Poseidon2HalfVar::from_qm31(&buffer[0], &QM31Var::from(&size_var));
         let right = Poseidon2HalfVar::from_qm31(&digest[0], &digest[1]);
         let expected_digest = Poseidon2HalfVar::permute_get_capacity(&left, &right).to_qm31();
-        for i in 0..2 {
-            self.compressed_digest[i].equalverify(&expected_digest[i]);
+        for (lhs, rhs) in self.compressed_digest.iter().zip(expected_digest.iter()) {
+            lhs.equalverify(rhs);
         }
 
         HashAccumulatorQM31Var {
@@ -518,7 +542,7 @@ impl ColumnsHasherVar {
     pub fn new(cs: &ConstraintSystemRef) -> Self {
         let mut map = IndexMap::new();
         for i in LOG_N_LANES..=MAX_SEQUENCE_LOG_SIZE {
-            map.insert(i as usize, HashAccumulatorCompressedVar::new(&cs));
+            map.insert(i as usize, HashAccumulatorCompressedVar::new(cs));
         }
         Self {
             cs: cs.clone(),
@@ -530,13 +554,13 @@ impl ColumnsHasherVar {
         let cs = log_size.cs();
         let mut entry = HashAccumulatorCompressedVar::new(&cs);
 
-        let mut bits = vec![];
+        let mut bits = Vec::with_capacity(self.map.len());
         for (k, _) in self.map.iter() {
             let bit = log_size.bitmap.get(&(*k as u32)).unwrap();
-            bits.push(bit);
+            bits.push(bit.clone());
         }
         for ((_, v), bit) in self.map.iter().zip(bits.iter()) {
-            entry = HashAccumulatorCompressedVar::select(&entry, v, &bit);
+            entry = HashAccumulatorCompressedVar::select(&entry, v, bit);
         }
 
         let mut decompressed = entry.decompress();
@@ -578,7 +602,7 @@ impl ColumnsHasherQM31Var {
     pub fn new(cs: &ConstraintSystemRef) -> Self {
         let mut map = IndexMap::new();
         for i in LOG_N_LANES..=MAX_SEQUENCE_LOG_SIZE {
-            map.insert(i as usize, HashAccumulatorQM31CompressedVar::new(&cs));
+            map.insert(i as usize, HashAccumulatorQM31CompressedVar::new(cs));
         }
         Self {
             cs: cs.clone(),
@@ -654,7 +678,7 @@ mod tests {
         let mut hash_accumulator = HashAccumulatorVar::new(&cs);
         let mut test_vars = Vec::new();
         for elem in test.iter() {
-            test_vars.push(M31Var::new_witness(&cs, &elem));
+            test_vars.push(M31Var::new_witness(&cs, elem));
         }
         hash_accumulator.update(&test_vars);
         let result = hash_accumulator.finalize();
@@ -722,7 +746,7 @@ mod tests {
         let mut hash_accumulator = HashAccumulatorQM31Var::new(&cs);
         let mut test_vars = Vec::new();
         for elem in test.iter() {
-            test_vars.push(QM31Var::new_witness(&cs, &elem));
+            test_vars.push(QM31Var::new_witness(&cs, elem));
         }
         hash_accumulator.update(&test_vars);
         let result = hash_accumulator.finalize();

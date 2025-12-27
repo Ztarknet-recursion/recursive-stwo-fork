@@ -34,31 +34,31 @@ impl FiatShamirResults {
     ) -> Self {
         let cs = proof.cs();
 
-        let mut preprocessed_commitment = proof.stark_proof.commitments[0].clone();
-        let mut trace_commitment = proof.stark_proof.commitments[1].clone();
-        let mut interaction_trace_commitment = proof.stark_proof.commitments[2].clone();
-        let mut composition_commitment = proof.stark_proof.commitments[3].clone();
+        let preprocessed_commitment = proof.stark_proof.commitments[0].clone();
+        let trace_commitment = proof.stark_proof.commitments[1].clone();
+        let interaction_trace_commitment = proof.stark_proof.commitments[2].clone();
+        let composition_commitment = proof.stark_proof.commitments[3].clone();
 
         let mut channel = ChannelVar::default(&cs);
 
         // Preprocessed trace.
-        channel.mix_root(&mut preprocessed_commitment);
+        channel.mix_root(&preprocessed_commitment);
 
         // Trace.
         proof.stmt0.mix_into(&mut channel);
-        channel.mix_root(&mut trace_commitment);
+        channel.mix_root(&trace_commitment);
 
         // Draw interaction elements.
         let lookup_elements = LookupElementsVar::draw(&mut channel);
 
         // Interaction trace.
         proof.stmt1.mix_into(&mut channel);
-        channel.mix_root(&mut interaction_trace_commitment);
+        channel.mix_root(&interaction_trace_commitment);
 
         let random_coeff = channel.draw_felts()[0].clone();
 
         // Read composition polynomial commitment.
-        channel.mix_root(&mut composition_commitment);
+        channel.mix_root(&composition_commitment);
 
         // Draw OODS point.
         let oods_point = CirclePointQM31Var::from_channel(&mut channel);
@@ -76,15 +76,10 @@ impl FiatShamirResults {
 
         // FRI layers commitments and alphas
         let mut fri_alphas = vec![];
-        channel.mix_root(&mut proof.stark_proof.fri_proof.first_layer_commitment);
+        channel.mix_root(&proof.stark_proof.fri_proof.first_layer_commitment);
         fri_alphas.push(channel.draw_felts()[0].clone());
 
-        for l in proof
-            .stark_proof
-            .fri_proof
-            .inner_layer_commitments
-            .iter_mut()
-        {
+        for l in proof.stark_proof.fri_proof.inner_layer_commitments.iter() {
             channel.mix_root(l);
             fri_alphas.push(channel.draw_felts()[0].clone());
         }

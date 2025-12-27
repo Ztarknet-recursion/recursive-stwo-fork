@@ -31,13 +31,12 @@ pub fn read_composition(
     fiat_shamir_hints: &CairoFiatShamirHints,
     proof: &CairoProof<Poseidon31MerkleHasher>,
 ) -> Vec<CompositionQueryResult> {
-    let log_sizes =
-        &[fiat_shamir_hints.composition_log_size - 1; 2 * SECURE_EXTENSION_DEGREE].to_vec();
+    let log_sizes = vec![fiat_shamir_hints.composition_log_size - 1; 2 * SECURE_EXTENSION_DEGREE];
     let queried_values = &proof.stark_proof.queried_values[3];
     let witness = &proof.stark_proof.decommitments[3].column_witness;
 
     let pad = read_query_values_into_pad(
-        log_sizes,
+        &log_sizes,
         queried_values,
         witness,
         &fiat_shamir_hints.raw_queries,
@@ -46,15 +45,15 @@ pub fn read_composition(
         proof.stark_proof.config.fri_config.n_queries,
     );
 
-    println!("pad: {:?}", pad[0]);
-
     let mut results = Vec::new();
-    for i in 0..proof.stark_proof.config.fri_config.n_queries {
-        let composition_query_result = CompositionQueryResult([
-            QM31::from_m31(pad[i][0], pad[i][1], pad[i][2], pad[i][3]),
-            QM31::from_m31(pad[i][4], pad[i][5], pad[i][6], pad[i][7]),
-        ]);
-        results.push(composition_query_result);
+    for c in pad
+        .iter()
+        .take(proof.stark_proof.config.fri_config.n_queries)
+    {
+        results.push(CompositionQueryResult([
+            QM31::from_m31(c[0], c[1], c[2], c[3]),
+            QM31::from_m31(c[4], c[5], c[6], c[7]),
+        ]));
     }
 
     results

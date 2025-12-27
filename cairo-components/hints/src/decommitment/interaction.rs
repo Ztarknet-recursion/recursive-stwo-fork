@@ -116,9 +116,6 @@ impl InteractionQueryResult {
         );
         self.range_checks.update_hashes(&mut columns_hasher);
         self.verify_bitwise.update_hashes(&mut columns_hasher);
-        for (k, v) in columns_hasher.0.iter() {
-            println!("k: {}, v: {:?}", k, v.finalize());
-        }
 
         let mut map = IndexMap::new();
         for (log_size, hash) in columns_hasher.0 {
@@ -474,8 +471,10 @@ pub fn read_interaction(
     );
 
     let mut results = Vec::new();
-    for i in 0..proof.stark_proof.config.fri_config.n_queries {
-        let m31_slice = &pad[i];
+    for m31_slice in pad
+        .iter()
+        .take(proof.stark_proof.config.fri_config.n_queries)
+    {
         // Convert M31 slice to QM31 slice (4 M31 -> 1 QM31)
         let qm31_slice = convert_m31_to_qm31(m31_slice);
         let interaction_query_result = allocate_interaction_query_result(&qm31_slice);

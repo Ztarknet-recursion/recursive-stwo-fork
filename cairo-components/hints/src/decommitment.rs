@@ -34,6 +34,7 @@ use crate::CairoFiatShamirHints;
 #[derive(Debug, Clone)]
 pub struct QueryDecommitmentProof {
     pub query: usize,
+    pub max_effective_log_size: u32,
     pub log_blowup_factor: u32,
     pub leaf_values: Vec<M31>,
     pub intermediate_layers: IndexMap<usize, QueryDecommitmentNode>,
@@ -72,15 +73,20 @@ impl QueryDecommitmentProof {
     ) -> Vec<QueryDecommitmentProof> {
         let mut layers = IndexMap::new();
 
-        let max_log_size = *merkle_verifier.column_log_sizes.iter().max().unwrap();
+        let max_tree_log_size = *merkle_verifier.column_log_sizes.iter().max().unwrap();
         let max_effective_log_size = *queries_per_log_size.keys().max().unwrap();
+
+        println!(
+            "max_tree_log_size = {}, max_effective_log_size = {}",
+            max_tree_log_size, max_effective_log_size
+        );
 
         let mut queried_values = queried_values.into_iter();
         let mut hash_witness = decommitment.hash_witness.into_iter();
         let mut column_witness = decommitment.column_witness.into_iter();
 
         let mut last_layer_hashes: Option<Vec<(usize, Poseidon31Hash)>> = None;
-        for layer_log_size in (0..=max_log_size).rev() {
+        for layer_log_size in (0..=max_tree_log_size).rev() {
             let mut layer = IndexMap::new();
 
             let n_columns_in_layer = *merkle_verifier
@@ -182,12 +188,11 @@ impl QueryDecommitmentProof {
             let mut cur = *query;
 
             let leaf_values = {
-                if max_log_size > max_effective_log_size {
+                if max_tree_log_size > max_effective_log_size {
                     vec![]
                 } else {
-                    cur >>= 1;
                     layers
-                        .get(&max_log_size)
+                        .get(&max_tree_log_size)
                         .unwrap()
                         .get(query)
                         .unwrap()
@@ -196,9 +201,9 @@ impl QueryDecommitmentProof {
                 }
             };
 
-            for log_size in (0..max_log_size).rev() {
+            for log_size in (0..=max_tree_log_size).rev() {
                 if log_size <= max_effective_log_size {
-                    let layer = layers.get(&(log_size as u32)).unwrap();
+                    let layer = layers.get(&log_size).unwrap();
                     let node = layer.get(&cur).unwrap();
                     nodes.insert(log_size as usize, node.clone());
                     cur >>= 1;
@@ -207,7 +212,8 @@ impl QueryDecommitmentProof {
 
             let proof = QueryDecommitmentProof {
                 query: *query,
-                log_blowup_factor: log_blowup_factor,
+                max_effective_log_size,
+                log_blowup_factor,
                 leaf_values,
                 intermediate_layers: nodes,
             };
@@ -222,10 +228,10 @@ impl QueryDecommitmentProof {
 ///
 /// This is a generic function that can be reused for preprocessed trace, trace, composition, etc.
 pub fn read_query_values_into_pad(
-    log_sizes: &Vec<u32>,
-    queried_values: &Vec<M31>,
-    witness: &Vec<M31>,
-    raw_queries: &Vec<usize>,
+    log_sizes: &[u32],
+    queried_values: &[M31],
+    witness: &[M31],
+    raw_queries: &[usize],
     query_positions_per_log_size: &BTreeMap<u32, Vec<usize>>,
     log_blowup_factor: u32,
     n_queries: usize,
@@ -435,7 +441,7 @@ mod tests {
             leaf_layer_hash,
             *column_hashes
                 .get(
-                    &(decommitment_proof.intermediate_layers.len()
+                    &(decommitment_proof.intermediate_layers.keys().max().unwrap()
                         - fiat_shamir_hints.pcs_config.fri_config.log_blowup_factor as usize)
                 )
                 .unwrap()
@@ -464,7 +470,7 @@ mod tests {
             leaf_layer_hash,
             *column_hashes
                 .get(
-                    &(decommitment_proof.intermediate_layers.len()
+                    &(decommitment_proof.intermediate_layers.keys().max().unwrap()
                         - fiat_shamir_hints.pcs_config.fri_config.log_blowup_factor as usize)
                 )
                 .unwrap()
@@ -494,7 +500,7 @@ mod tests {
             leaf_layer_hash,
             *column_hashes
                 .get(
-                    &(decommitment_proof.intermediate_layers.len()
+                    &(decommitment_proof.intermediate_layers.keys().max().unwrap()
                         - fiat_shamir_hints.pcs_config.fri_config.log_blowup_factor as usize)
                 )
                 .unwrap()

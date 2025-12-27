@@ -39,6 +39,8 @@ impl BitOr<&BitVar> for &BitVar {
 impl BitAnd<&BitVar> for &BitVar {
     type Output = BitVar;
 
+    // Bit-AND is implemented as multiplication in the base field since bits are constrained to {0,1}.
+    #[allow(clippy::suspicious_arithmetic_impl)]
     fn bitand(self, rhs: &BitVar) -> BitVar {
         BitVar(&self.0 * &rhs.0)
     }
@@ -87,9 +89,9 @@ impl Var for BitsVar {
 
 impl AllocVar for BitsVar {
     fn new_variables(cs: &ConstraintSystemRef, value: &Self::Value, mode: AllocationMode) -> Self {
-        let mut bits = vec![];
-        for i in 0..value.len() {
-            bits.push(BitVar::new_variables(cs, &value[i], mode));
+        let mut bits = Vec::with_capacity(value.len());
+        for bit in value.iter() {
+            bits.push(BitVar::new_variables(cs, bit, mode));
         }
         Self(bits)
     }

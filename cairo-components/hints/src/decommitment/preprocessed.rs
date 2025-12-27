@@ -347,8 +347,10 @@ pub fn read_preprocessed_trace(
     );
 
     let mut results = vec![];
-    for i in 0..proof.stark_proof.config.fri_config.n_queries {
-        let c = &pad[i];
+    for c in pad
+        .iter()
+        .take(proof.stark_proof.config.fri_config.n_queries)
+    {
         results.push(PreprocessedTraceQueryResult {
             seq_25: c[0],
             seq_24: c[1],

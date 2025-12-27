@@ -111,7 +111,7 @@ impl StarkProofVar {
         {
             let current_log_size = M31Var::new_constant(&cs, &M31::from(*log_size));
             let candidate_max = max.max(&current_log_size, 5);
-            max = M31Var::select(&max, &candidate_max, &is_present);
+            max = M31Var::select(&max, &candidate_max, is_present);
         }
         max
     }
@@ -150,7 +150,7 @@ impl AllocVar for FriProofVar {
             layer_log_size += 1;
         }
 
-        for _ in layer_log_size..=(MAX_SEQUENCE_LOG_SIZE - 1) {
+        while layer_log_size <= (MAX_SEQUENCE_LOG_SIZE - 1) {
             inner_layers.insert(
                 layer_log_size,
                 FriLayerProofVar {

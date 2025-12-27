@@ -233,7 +233,7 @@ impl CairoFiatShamirHints {
                 channel.mix_u32s(&program.iter().map(|(id, _)| *id).collect_vec());
                 channel.mix_u32s(&program.iter().flat_map(|(_, value)| *value).collect_vec());
 
-                initial_channel = channel.digest().clone();
+                initial_channel = channel.digest();
 
                 // Mix public segments.
                 public_segments.mix_into(channel);
@@ -335,8 +335,7 @@ impl CairoFiatShamirHints {
         );
 
         // Verify lookup argument.
-        if lookup_sum(&claim, &interaction_elements, &proof.interaction_claim)
-            != SecureField::zero()
+        if lookup_sum(claim, &interaction_elements, &proof.interaction_claim) != SecureField::zero()
         {
             panic!("Invalid logup sum");
         }
@@ -344,7 +343,7 @@ impl CairoFiatShamirHints {
         commitment_scheme_verifier.commit(stark_proof.commitments[2], &log_sizes[2], channel);
 
         let component_generator = CairoComponents::new(
-            &claim,
+            claim,
             &interaction_elements,
             &proof.interaction_claim,
             &preprocessed_trace.ids(),
@@ -475,7 +474,7 @@ impl CairoFiatShamirHints {
                     log_size,
                     raw_queries
                         .iter()
-                        .map(|x| (x >> (max_first_layer_column_log_size - log_size)) as usize)
+                        .map(|x| x >> (max_first_layer_column_log_size - log_size))
                         .collect_vec(),
                 );
             }
@@ -492,7 +491,7 @@ impl CairoFiatShamirHints {
                 .map(|domain| domain.log_size())
                 .collect::<BTreeSet<u32>>();
             let max_column_log_size = *column_log_sizes.iter().max().unwrap();
-            println!("max_log_size: {}", max_column_log_size);
+            println!("max_column_log_size: {}", max_column_log_size);
         }
 
         println!(
@@ -509,10 +508,10 @@ impl CairoFiatShamirHints {
             initial_channel,
             pcs_config,
             log_sizes,
-            preprocessed_commitment: stark_proof.commitments[0].clone(),
-            trace_commitment: stark_proof.commitments[1].clone(),
-            interaction_commitment: stark_proof.commitments[2].clone(),
-            composition_commitment: stark_proof.commitments[3].clone(),
+            preprocessed_commitment: stark_proof.commitments[0],
+            trace_commitment: stark_proof.commitments[1],
+            interaction_commitment: stark_proof.commitments[2],
+            composition_commitment: stark_proof.commitments[3],
 
             oods_point,
             sample_points,

@@ -25,7 +25,7 @@ impl Poseidon31MerkleHasherVar {
         right: &Poseidon2HalfVar,
         bit: &BitVar,
     ) -> Poseidon2HalfVar {
-        Poseidon2HalfVar::swap_permute_get_rate(&left, &right, Some(bit.clone()))
+        Poseidon2HalfVar::swap_permute_get_rate(left, right, Some(bit.clone()))
     }
 
     pub fn hash_tree_with_column_hash_with_swap(
@@ -34,7 +34,7 @@ impl Poseidon31MerkleHasherVar {
         bit: &BitVar,
         column_hash: &Poseidon2HalfVar,
     ) -> Poseidon2HalfVar {
-        let hash_tree = Poseidon2HalfVar::swap_permute_get_rate(&left, &right, Some(bit.clone()));
+        let hash_tree = Poseidon2HalfVar::swap_permute_get_rate(left, right, Some(bit.clone()));
         Poseidon2HalfVar::permute_get_rate(&hash_tree, column_hash)
     }
 
@@ -119,7 +119,7 @@ impl Poseidon31MerkleHasherVar {
 
         let mut digest = Poseidon2HalfVar::permute_get_capacity(&first_chunk, &zero);
         for chunk in m31.chunks_exact(8).skip(1).take(num_chunk - 2) {
-            let left = Poseidon2HalfVar::from_m31(&chunk);
+            let left = Poseidon2HalfVar::from_m31(chunk);
             digest = Poseidon2HalfVar::permute_get_capacity(&left, &digest);
         }
 
@@ -178,49 +178,37 @@ mod test {
         let a = Poseidon31MerkleHasherVar::hash_m31_columns_get_rate(&test_var[0..7]);
         let b = Poseidon31MerkleHasher::hash_node(None, &test[0..7]);
         let a_val = a.value();
-        for i in 0..8 {
-            assert_eq!(a_val[i], b.0[i]);
-        }
+        assert_eq!(a_val, b.0);
 
         // test 13
         let a = Poseidon31MerkleHasherVar::hash_m31_columns_get_rate(&test_var[0..13]);
         let b = Poseidon31MerkleHasher::hash_node(None, &test[0..13]);
         let a_val = a.value();
-        for i in 0..8 {
-            assert_eq!(a_val[i], b.0[i]);
-        }
+        assert_eq!(a_val, b.0);
 
         // test 16
         let a = Poseidon31MerkleHasherVar::hash_m31_columns_get_rate(&test_var[0..16]);
         let b = Poseidon31MerkleHasher::hash_node(None, &test[0..16]);
         let a_val = a.value();
-        for i in 0..8 {
-            assert_eq!(a_val[i], b.0[i]);
-        }
+        assert_eq!(a_val, b.0);
 
         // test 17
         let a = Poseidon31MerkleHasherVar::hash_m31_columns_get_rate(&test_var[0..17]);
         let b = Poseidon31MerkleHasher::hash_node(None, &test[0..17]);
         let a_val = a.value();
-        for i in 0..8 {
-            assert_eq!(a_val[i], b.0[i]);
-        }
+        assert_eq!(a_val, b.0);
 
         // test 21
         let a = Poseidon31MerkleHasherVar::hash_m31_columns_get_rate(&test_var[0..21]);
         let b = Poseidon31MerkleHasher::hash_node(None, &test[0..21]);
         let a_val = a.value();
-        for i in 0..8 {
-            assert_eq!(a_val[i], b.0[i]);
-        }
+        assert_eq!(a_val, b.0);
 
         // test 25
         let a = Poseidon31MerkleHasherVar::hash_m31_columns_get_rate(&test_var[0..25]);
         let b = Poseidon31MerkleHasher::hash_node(None, &test[0..25]);
         let a_val = a.value();
-        for i in 0..8 {
-            assert_eq!(a_val[i], b.0[i]);
-        }
+        assert_eq!(a_val, b.0);
 
         let test_hash_left: [M31; 8] = prng.gen();
         let test_hash_right: [M31; 8] = prng.gen();
@@ -242,9 +230,7 @@ mod test {
             &[],
         );
         let a_val = a.value();
-        for i in 0..8 {
-            assert_eq!(a_val[i], b.0[i]);
-        }
+        assert_eq!(a_val, b.0);
 
         let test_hash_right_var =
             Poseidon2HalfVar::new_witness(&cs, &Poseidon31Hash(test_hash_right));
@@ -262,9 +248,7 @@ mod test {
             &test_hash_column,
         );
         let a_val = a.value();
-        for i in 0..8 {
-            assert_eq!(a_val[i], b.0[i]);
-        }
+        assert_eq!(a_val, b.0);
 
         let config = PcsConfig {
             pow_bits: 20,

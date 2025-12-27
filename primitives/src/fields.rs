@@ -190,9 +190,7 @@ impl Sub<WrappedQM31Var> for WrappedQM31Var {
                 WrappedQM31Var::Constant(value - rhs)
             }
             (WrappedQM31Var::Allocated(variable), WrappedQM31Var::Constant(rhs)) => {
-                WrappedQM31Var::Allocated(
-                    &variable - &QM31Var::new_constant(&variable.cs(), &QM31::from(rhs)),
-                )
+                WrappedQM31Var::Allocated(&variable - &QM31Var::new_constant(&variable.cs(), &rhs))
             }
             (WrappedQM31Var::Constant(rhs), WrappedQM31Var::Allocated(variable)) => {
                 WrappedQM31Var::Allocated(&QM31Var::new_constant(&variable.cs(), &rhs) - &variable)
@@ -214,9 +212,7 @@ impl Mul<WrappedQM31Var> for WrappedQM31Var {
             }
             (WrappedQM31Var::Allocated(variable), WrappedQM31Var::Constant(rhs))
             | (WrappedQM31Var::Constant(rhs), WrappedQM31Var::Allocated(variable)) => {
-                WrappedQM31Var::Allocated(
-                    &variable * &QM31Var::new_constant(&variable.cs(), &QM31::from(rhs)),
-                )
+                WrappedQM31Var::Allocated(&variable * &QM31Var::new_constant(&variable.cs(), &rhs))
             }
             (WrappedQM31Var::Allocated(variable), WrappedQM31Var::Allocated(rhs)) => {
                 WrappedQM31Var::Allocated(&variable * &rhs)
@@ -240,14 +236,14 @@ impl From<SecureField> for WrappedQM31Var {
 impl WrappedQM31Var {
     pub fn unwrap(&self, cs: &ConstraintSystemRef) -> QM31Var {
         match self {
-            WrappedQM31Var::Constant(value) => QM31Var::new_constant(cs, &value),
+            WrappedQM31Var::Constant(value) => QM31Var::new_constant(cs, value),
             WrappedQM31Var::Allocated(variable) => variable.clone(),
         }
     }
 
     pub fn unwrap_constant(&self) -> QM31 {
         match self {
-            WrappedQM31Var::Constant(value) => value.clone(),
+            WrappedQM31Var::Constant(value) => *value,
             WrappedQM31Var::Allocated(_) => panic!("Cannot unwrap allocated QM31 variable"),
         }
     }

@@ -20,10 +20,11 @@ pub struct SinglePathMerkleProof {
 
 impl SinglePathMerkleProof {
     pub fn verify(&self) {
-        let mut cur_hash = Poseidon31MerkleHasher::hash_node(
-            None,
-            &self.columns.get(&self.depth).unwrap_or(&vec![]),
-        );
+        let leaf = self
+            .columns
+            .get(&self.depth)
+            .map_or(&[][..], |v| v.as_slice());
+        let mut cur_hash = Poseidon31MerkleHasher::hash_node(None, leaf);
 
         for i in 0..self.depth {
             let h = self.depth - i - 1;
@@ -34,7 +35,7 @@ impl SinglePathMerkleProof {
                 } else {
                     Some((self.sibling_hashes[i], cur_hash))
                 },
-                self.columns.get(&h).unwrap_or(&vec![]),
+                self.columns.get(&h).map_or(&[][..], |v| v.as_slice()),
             );
         }
 
@@ -55,7 +56,7 @@ impl SinglePathMerkleProof {
         queries.dedup();
 
         // create the new value map
-        let mut value_iterator = values.into_iter();
+        let mut value_iterator = values.iter();
 
         let mut queries_values_map = HashMap::new();
         for &query in queries.iter() {
@@ -94,7 +95,7 @@ impl SinglePathMerkleProof {
             let mut column_layer = HashMap::new();
 
             for &position in positions.iter() {
-                if !layer.contains_key(&(position >> 1)) {
+                if let std::collections::hash_map::Entry::Vacant(e) = layer.entry(position >> 1) {
                     let sibling_idx = position ^ 1;
 
                     let columns = if let Some(&num_columns) =
@@ -128,7 +129,7 @@ impl SinglePathMerkleProof {
                         Poseidon31MerkleHasher::hash_node(Some((*left, *right)), &columns)
                     };
 
-                    layer.insert(position >> 1, hash);
+                    e.insert(hash);
                     parents.insert(position >> 1);
                 }
             }
@@ -175,7 +176,7 @@ impl SinglePathMerkleProof {
                 query,
                 sibling_hashes,
                 columns,
-                root: root.clone(),
+                root,
                 depth: max_log_size as usize,
             });
         }
@@ -217,7 +218,7 @@ impl DecommitHints {
 
             **v = SinglePathMerkleProof::from_stwo_proof(
                 max_log_size,
-                &fiat_shamir_hints
+                fiat_shamir_hints
                     .unsorted_query_positions_per_log_size
                     .get(&max_log_size)
                     .unwrap(),

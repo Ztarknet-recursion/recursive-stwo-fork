@@ -39,18 +39,18 @@ impl AllocVar for PublicSegmentRangesVar {
     fn new_variables(cs: &ConstraintSystemRef, value: &Self::Value, mode: AllocationMode) -> Self {
         let output = SegmentRangeVar::new_variables(cs, &value.output, mode);
 
-        let pedersen = SegmentRangeVar::new_variables(cs, &value.pedersen.as_ref().unwrap(), mode);
+        let pedersen = SegmentRangeVar::new_variables(cs, value.pedersen.as_ref().unwrap(), mode);
         let range_check_128 =
-            SegmentRangeVar::new_variables(cs, &value.range_check_128.as_ref().unwrap(), mode);
-        let ecdsa = SegmentRangeVar::new_variables(cs, &value.ecdsa.as_ref().unwrap(), mode);
-        let bitwise = SegmentRangeVar::new_variables(cs, &value.bitwise.as_ref().unwrap(), mode);
-        let ec_op = SegmentRangeVar::new_variables(cs, &value.ec_op.as_ref().unwrap(), mode);
-        let keccak = SegmentRangeVar::new_variables(cs, &value.keccak.as_ref().unwrap(), mode);
-        let poseidon = SegmentRangeVar::new_variables(cs, &value.poseidon.as_ref().unwrap(), mode);
+            SegmentRangeVar::new_variables(cs, value.range_check_128.as_ref().unwrap(), mode);
+        let ecdsa = SegmentRangeVar::new_variables(cs, value.ecdsa.as_ref().unwrap(), mode);
+        let bitwise = SegmentRangeVar::new_variables(cs, value.bitwise.as_ref().unwrap(), mode);
+        let ec_op = SegmentRangeVar::new_variables(cs, value.ec_op.as_ref().unwrap(), mode);
+        let keccak = SegmentRangeVar::new_variables(cs, value.keccak.as_ref().unwrap(), mode);
+        let poseidon = SegmentRangeVar::new_variables(cs, value.poseidon.as_ref().unwrap(), mode);
         let range_check_96 =
-            SegmentRangeVar::new_variables(cs, &value.range_check_96.as_ref().unwrap(), mode);
-        let add_mod = SegmentRangeVar::new_variables(cs, &value.add_mod.as_ref().unwrap(), mode);
-        let mul_mod = SegmentRangeVar::new_variables(cs, &value.mul_mod.as_ref().unwrap(), mode);
+            SegmentRangeVar::new_variables(cs, value.range_check_96.as_ref().unwrap(), mode);
+        let add_mod = SegmentRangeVar::new_variables(cs, value.add_mod.as_ref().unwrap(), mode);
+        let mul_mod = SegmentRangeVar::new_variables(cs, value.mul_mod.as_ref().unwrap(), mode);
 
         Self {
             output,

@@ -54,7 +54,7 @@ impl<MC: MerkleChannel> AnswerHints<MC> {
             .clone()
             .map(|values| values.into_iter());
 
-        let _ = fiat_shamir_hints
+        fiat_shamir_hints
             .all_log_sizes
             .iter()
             .rev()

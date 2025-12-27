@@ -387,8 +387,7 @@ impl PlonkWithPoseidonConstraintSystem {
         assert!(self.mult_poseidon.is_empty());
 
         let n_vars = self.variables.len();
-        let mut counts = Vec::new();
-        counts.resize(n_vars, 0isize);
+        let mut counts = vec![0isize; n_vars];
 
         let n_rows = self.a_wire.len();
         assert!(n_rows.is_power_of_two());
@@ -567,54 +566,54 @@ impl PlonkWithPoseidonConstraintSystem {
             a_wire: range.clone().map(|i| self.a_wire[i].into()).collect(),
             b_wire: range.clone().map(|i| self.b_wire[i].into()).collect(),
             c_wire: range.clone().map(|i| self.c_wire[i].into()).collect(),
-            op: range.clone().map(|i| self.op[i].into()).collect(),
+            op: range.clone().map(|i| self.op[i]).collect(),
             a_val_0: range
                 .clone()
-                .map(|i| self.variables[self.a_wire[i]].0 .0.into())
+                .map(|i| self.variables[self.a_wire[i]].0 .0)
                 .collect(),
             a_val_1: range
                 .clone()
-                .map(|i| self.variables[self.a_wire[i]].0 .1.into())
+                .map(|i| self.variables[self.a_wire[i]].0 .1)
                 .collect(),
             a_val_2: range
                 .clone()
-                .map(|i| self.variables[self.a_wire[i]].1 .0.into())
+                .map(|i| self.variables[self.a_wire[i]].1 .0)
                 .collect(),
             a_val_3: range
                 .clone()
-                .map(|i| self.variables[self.a_wire[i]].1 .1.into())
+                .map(|i| self.variables[self.a_wire[i]].1 .1)
                 .collect(),
             b_val_0: range
                 .clone()
-                .map(|i| self.variables[self.b_wire[i]].0 .0.into())
+                .map(|i| self.variables[self.b_wire[i]].0 .0)
                 .collect(),
             b_val_1: range
                 .clone()
-                .map(|i| self.variables[self.b_wire[i]].0 .1.into())
+                .map(|i| self.variables[self.b_wire[i]].0 .1)
                 .collect(),
             b_val_2: range
                 .clone()
-                .map(|i| self.variables[self.b_wire[i]].1 .0.into())
+                .map(|i| self.variables[self.b_wire[i]].1 .0)
                 .collect(),
             b_val_3: range
                 .clone()
-                .map(|i| self.variables[self.b_wire[i]].1 .1.into())
+                .map(|i| self.variables[self.b_wire[i]].1 .1)
                 .collect(),
             c_val_0: range
                 .clone()
-                .map(|i| self.variables[self.c_wire[i]].0 .0.into())
+                .map(|i| self.variables[self.c_wire[i]].0 .0)
                 .collect(),
             c_val_1: range
                 .clone()
-                .map(|i| self.variables[self.c_wire[i]].0 .1.into())
+                .map(|i| self.variables[self.c_wire[i]].0 .1)
                 .collect(),
             c_val_2: range
                 .clone()
-                .map(|i| self.variables[self.c_wire[i]].1 .0.into())
+                .map(|i| self.variables[self.c_wire[i]].1 .0)
                 .collect(),
             c_val_3: range
                 .clone()
-                .map(|i| self.variables[self.c_wire[i]].1 .1.into())
+                .map(|i| self.variables[self.c_wire[i]].1 .1)
                 .collect(),
         };
 
@@ -625,5 +624,11 @@ impl PlonkWithPoseidonConstraintSystem {
         );
 
         (circuit, self.flow.clone())
+    }
+}
+
+impl Default for PlonkWithPoseidonConstraintSystem {
+    fn default() -> Self {
+        Self::new()
     }
 }

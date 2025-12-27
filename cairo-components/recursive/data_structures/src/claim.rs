@@ -349,11 +349,11 @@ impl AllocVar for CairoClaimVar {
         let public_data = PublicDataVar::new_variables(cs, &value.public_data, mode);
         let opcode_claim = OpcodeClaimVar::new_variables(cs, &value.opcodes, mode);
         let verify_instruction =
-            LogSizeVar::new_variables(cs, &(value.verify_instruction.log_size as u32), mode);
+            LogSizeVar::new_variables(cs, &value.verify_instruction.log_size, mode);
         let blake_context = BlakeContextClaimVar::new_variables(cs, &value.blake_context, mode);
         let builtins = BuiltinsClaimVar::new_variables(cs, &value.builtins, mode);
         let memory_address_to_id =
-            LogSizeVar::new_variables(cs, &(value.memory_address_to_id.log_size as u32), mode);
+            LogSizeVar::new_variables(cs, &value.memory_address_to_id.log_size, mode);
         let memory_id_to_value =
             MemoryIdToBigClaimVar::new_variables(cs, &value.memory_id_to_value, mode);
         Self {
