@@ -59,8 +59,7 @@ impl AllocVar for QueryDecommitmentProofVar {
 
         let mut query_lsb = IndexMap::new();
         let mut is_layer_included = false;
-        for log_size in
-            (0_usize..(MAX_SEQUENCE_LOG_SIZE + value.log_blowup_factor) as usize).rev()
+        for log_size in (0_usize..(MAX_SEQUENCE_LOG_SIZE + value.log_blowup_factor) as usize).rev()
         {
             is_layer_included |= max_included_log_size as i32
                 == (log_size as i32 + 1 - value.log_blowup_factor as i32);
