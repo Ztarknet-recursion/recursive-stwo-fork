@@ -474,7 +474,7 @@ impl CairoFiatShamirHints {
                     log_size,
                     raw_queries
                         .iter()
-                        .map(|x| (x >> (max_first_layer_column_log_size - log_size)) as usize)
+                        .map(|x| x >> (max_first_layer_column_log_size - log_size))
                         .collect_vec(),
                 );
             }

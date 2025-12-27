@@ -526,8 +526,7 @@ impl InnerLayersHints {
             let decommitment_positions = decommitmented.keys().copied().collect_vec();
             let decommitmented_values = decommitmented
                 .values()
-                .map(|v| v.to_m31_array())
-                .flatten()
+                .flat_map(|v| v.to_m31_array())
                 .collect_vec();
 
             let merkle_verifier: MerkleVerifier<Poseidon31MerkleHasher> = MerkleVerifier::new(
@@ -544,7 +543,7 @@ impl InnerLayersHints {
 
             let merkle_proofs = SinglePairMerkleProof::from_stwo_proof(
                 &BTreeSet::from([log_size]),
-                inner_layer.commitment.clone(),
+                inner_layer.commitment,
                 &fiat_shamir_hints
                     .unsorted_query_positions_per_log_size
                     .get(&fiat_shamir_hints.max_first_layer_column_log_size)
@@ -616,15 +615,15 @@ impl CairoFoldingHints {
                 .len()
         );
 
-        let first_layer_hints = FirstLayerHints::compute(fiat_shamir_hints, answer_hints, &proof);
+        let first_layer_hints = FirstLayerHints::compute(fiat_shamir_hints, answer_hints, proof);
         for proof in first_layer_hints.merkle_proofs.iter() {
             proof.verify();
         }
 
         let _inner_layers_hints = InnerLayersHints::compute(
             &first_layer_hints.folded_evals_by_column,
-            &fiat_shamir_hints,
-            &proof,
+            fiat_shamir_hints,
+            proof,
         );
 
         Self {}

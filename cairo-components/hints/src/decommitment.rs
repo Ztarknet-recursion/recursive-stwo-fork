@@ -198,7 +198,7 @@ impl QueryDecommitmentProof {
 
             for log_size in (0..max_log_size).rev() {
                 if log_size <= max_effective_log_size {
-                    let layer = layers.get(&(log_size as u32)).unwrap();
+                    let layer = layers.get(&log_size).unwrap();
                     let node = layer.get(&cur).unwrap();
                     nodes.insert(log_size as usize, node.clone());
                     cur >>= 1;
