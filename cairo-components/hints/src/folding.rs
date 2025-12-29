@@ -1,6 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use cairo_air::CairoProof;
+use indexmap::IndexMap;
 use itertools::{zip_eq, Itertools};
 use num_traits::Zero;
 use stwo::core::{
@@ -455,7 +456,7 @@ impl FirstLayerHints {
 }
 
 pub struct InnerLayersHints {
-    pub merkle_proofs: BTreeMap<u32, Vec<SinglePairMerkleProof>>,
+    pub merkle_proofs: IndexMap<u32, Vec<SinglePairMerkleProof>>,
     pub folded_intermediate_results: BTreeMap<u32, BTreeMap<usize, SecureField>>,
 }
 
@@ -478,7 +479,7 @@ impl InnerLayersHints {
             folded.insert(i, QM31::zero());
         }
 
-        let mut all_merkle_proofs = BTreeMap::new();
+        let mut all_merkle_proofs = IndexMap::new();
         let mut all_folded_intermediate_results = BTreeMap::new();
 
         for (i, inner_layer) in proof.stark_proof.fri_proof.inner_layers.iter().enumerate() {
@@ -592,37 +593,6 @@ impl CairoFoldingHints {
         answer_hints: &AnswerHints,
         proof: &CairoProof<Poseidon31MerkleHasher>,
     ) -> Self {
-        let fri_verifier = &fiat_shamir_hints.fri_verifier;
-
-        let log_sizes_with_columns = fiat_shamir_hints
-            .query_positions_per_log_size
-            .keys()
-            .collect_vec();
-        println!("log_sizes_with_columns: {:?}", log_sizes_with_columns);
-
-        println!(
-            "fri_verifier first layer decommitment: {:?}",
-            fri_verifier.first_layer.proof.fri_witness.len()
-        );
-        println!(
-            "fri_verifier first layer decommitment column witness: {:?}",
-            fri_verifier
-                .first_layer
-                .proof
-                .decommitment
-                .column_witness
-                .len()
-        );
-        println!(
-            "fri_verifier first layer decommitment hash witness: {:?}",
-            fri_verifier
-                .first_layer
-                .proof
-                .decommitment
-                .hash_witness
-                .len()
-        );
-
         let first_layer_hints = FirstLayerHints::compute(fiat_shamir_hints, answer_hints, proof);
         for proof in first_layer_hints.merkle_proofs.iter() {
             proof.verify();

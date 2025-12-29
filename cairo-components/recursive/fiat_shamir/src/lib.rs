@@ -84,14 +84,6 @@ impl CairoFiatShamirResults {
 
         let max_preprocessed_trace_log_size = proof.stark_proof.max_preprocessed_trace_log_size();
         let max_trace_and_interaction_log_size = proof.claim.max_trace_and_interaction_log_size();
-        println!(
-            "max_preprocessed_trace_log_size: {:?}",
-            max_preprocessed_trace_log_size.value
-        );
-        println!(
-            "max_trace_and_interaction_log_size: {:?}",
-            max_trace_and_interaction_log_size.value
-        );
 
         let max_log_size =
             max_preprocessed_trace_log_size.max(&max_trace_and_interaction_log_size, 5);
@@ -132,10 +124,6 @@ impl CairoFiatShamirResults {
         }
 
         channel.mix_one_felt(&proof.stark_proof.fri_proof.last_layer_constant);
-
-        println!("max_log_size: {:?}", max_log_size.value);
-        println!("composition_log_size: {:?}", composition_log_size.value);
-
         proof.stark_proof.proof_of_work.mix_into(&mut channel);
 
         let lower_bits = BitsVar::from_m31(&channel.digest.to_qm31()[0].decompose_m31()[0], 31)
@@ -179,11 +167,6 @@ impl CairoFiatShamirResults {
             }
             queries.push(bits);
         }
-
-        println!(
-            "channel after sampling queries: {:?}",
-            channel.digest.value()
-        );
 
         Self {
             oods_point,

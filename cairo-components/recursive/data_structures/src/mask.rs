@@ -178,7 +178,5 @@ mod tests {
                 assert_eq!(i[0], fiat_shamir_hints.oods_point);
             }
         }
-
-        println!("mask_table_var length: {:?}", mask_table_var.0.len());
     }
 }

@@ -245,7 +245,7 @@ impl PlonkWithPoseidonConstraintSystem {
                 self.b_wire.push(0);
                 self.c_wire.push(c_wire);
                 self.poseidon_wire.push(0);
-                self.enforce_c_m31.push(1);
+                self.enforce_c_m31.push(0);
                 self.op.push(M31::one());
 
                 self.num_input += 1;

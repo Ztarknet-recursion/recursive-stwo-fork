@@ -6,11 +6,15 @@ members = [
     "components/recursive/answer", "components/recursive/folding",
     "cairo-components/hints", "cairo-components/recursive/fiat_shamir", "cairo-components/recursive/data_structures",
     "cairo-components/recursive/composition", "cairo-components/recursive/decommitment",
-    "cairo-components/recursive/answer", "cairo-components/recursive/folding"
+    "cairo-components/recursive/answer", "cairo-components/recursive/folding",
+    "cairo-components/interface",
+    "examples/reduction",
+    "examples/multi-proofs"
 ]
 
 [workspace.dependencies]
 serde = { version = "1.0.217", features = ["derive"] }
+serde_json = "1.0"
 stwo = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/stwo-circle-poseidon-plonk/", branch = "cp-poseidon-flattened", features = ["parallel"] }
 stwo-examples = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/stwo-circle-poseidon-plonk/", branch = "cp-poseidon-flattened", features = ["parallel"]  }
 stwo-constraint-framework = { git = "https://github.com/Bitcoin-Wildlife-Sanctuary/stwo-circle-poseidon-plonk/", branch = "cp-poseidon-flattened", features = ["parallel"]  }

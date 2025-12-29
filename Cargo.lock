@@ -539,6 +539,43 @@ dependencies = [
 ]
 
 [[package]]
+name = "cairo-plonk-dsl-example-multi-proofs"
+version = "0.1.0"
+dependencies = [
+ "bincode",
+ "circle-plonk-dsl-answer",
+ "circle-plonk-dsl-composition",
+ "circle-plonk-dsl-constraint-system",
+ "circle-plonk-dsl-data-structures",
+ "circle-plonk-dsl-fiat-shamir",
+ "circle-plonk-dsl-folding",
+ "circle-plonk-dsl-hints",
+ "circle-plonk-dsl-primitives",
+ "num-traits",
+ "serde",
+ "serde_json",
+ "stwo",
+ "stwo-examples",
+]
+
+[[package]]
+name = "cairo-plonk-dsl-example-reduction"
+version = "0.1.0"
+dependencies = [
+ "bincode",
+ "cairo-air",
+ "cairo-plonk-dsl-data-structures",
+ "cairo-plonk-dsl-interface",
+ "circle-plonk-dsl-constraint-system",
+ "circle-plonk-dsl-primitives",
+ "num-traits",
+ "serde",
+ "serde_json",
+ "stwo",
+ "stwo-examples",
+]
+
+[[package]]
 name = "cairo-plonk-dsl-fiat-shamir"
 version = "0.1.0"
 dependencies = [
@@ -587,6 +624,28 @@ dependencies = [
  "stwo",
  "stwo-cairo-common",
  "stwo-constraint-framework",
+ "stwo-examples",
+]
+
+[[package]]
+name = "cairo-plonk-dsl-interface"
+version = "0.1.0"
+dependencies = [
+ "bincode",
+ "cairo-air",
+ "cairo-plonk-dsl-answer",
+ "cairo-plonk-dsl-composition",
+ "cairo-plonk-dsl-data-structures",
+ "cairo-plonk-dsl-decommitment",
+ "cairo-plonk-dsl-fiat-shamir",
+ "cairo-plonk-dsl-folding",
+ "cairo-plonk-dsl-hints",
+ "circle-plonk-dsl-constraint-system",
+ "circle-plonk-dsl-primitives",
+ "indexmap",
+ "num-traits",
+ "stwo",
+ "stwo-cairo-common",
  "stwo-examples",
 ]
 

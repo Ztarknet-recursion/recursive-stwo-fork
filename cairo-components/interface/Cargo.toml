@@ -1,0 +1,22 @@
+[package]
+name = "cairo-plonk-dsl-interface"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+stwo.workspace = true
+stwo-examples.workspace = true
+stwo-cairo-common.workspace = true
+cairo-plonk-dsl-hints = { path = "../hints" }
+circle-plonk-dsl-primitives = { path = "../../primitives" }
+circle-plonk-dsl-constraint-system = { path = "../../constraint_system" }
+cairo-plonk-dsl-fiat-shamir = { path = "../recursive/fiat_shamir" }
+cairo-plonk-dsl-composition = { path = "../recursive/composition" }
+cairo-plonk-dsl-data-structures = { path = "../recursive/data_structures" }
+cairo-plonk-dsl-answer = { path = "../recursive/answer" }
+cairo-plonk-dsl-decommitment = { path = "../recursive/decommitment" }
+cairo-plonk-dsl-folding = { path = "../recursive/folding" }
+bincode.workspace = true
+num-traits.workspace = true
+cairo-air.workspace = true
+indexmap.workspace = true

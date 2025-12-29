@@ -76,11 +76,6 @@ impl QueryDecommitmentProof {
         let max_tree_log_size = *merkle_verifier.column_log_sizes.iter().max().unwrap();
         let max_effective_log_size = *queries_per_log_size.keys().max().unwrap();
 
-        println!(
-            "max_tree_log_size = {}, max_effective_log_size = {}",
-            max_tree_log_size, max_effective_log_size
-        );
-
         let mut queried_values = queried_values.into_iter();
         let mut hash_witness = decommitment.hash_witness.into_iter();
         let mut column_witness = decommitment.column_witness.into_iter();
@@ -139,14 +134,7 @@ impl QueryDecommitmentProof {
                 };
 
                 let node_values = node_values_iter.take(n_columns_in_layer).collect_vec();
-                if node_values.len() != n_columns_in_layer {
-                    println!(
-                        "node values: {:?}, n_columns_in_layer: {:?}",
-                        node_values.len(),
-                        n_columns_in_layer
-                    );
-                    panic!("node values length mismatch");
-                }
+                assert_eq!(node_values.len(), n_columns_in_layer);
 
                 layer.insert(
                     node_index,
@@ -308,14 +296,6 @@ impl CairoDecommitmentHints {
         let preprocessed_trace = read_preprocessed_trace(fiat_shamir_hints, proof);
         let trace = read_trace(fiat_shamir_hints, proof);
         let interaction = read_interaction(fiat_shamir_hints, proof);
-        println!(
-            "queried_values: {:?}",
-            proof.stark_proof.queried_values[2].len()
-        );
-        println!(
-            "queried_values: {:?}",
-            proof.stark_proof.queried_values[3].len()
-        );
 
         let log_blowup_factor = fiat_shamir_hints.pcs_config.fri_config.log_blowup_factor;
 

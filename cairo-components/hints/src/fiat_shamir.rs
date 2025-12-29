@@ -360,7 +360,6 @@ impl CairoFiatShamirHints {
             n_preprocessed_columns,
         };
         let composition_log_size = components.composition_log_degree_bound();
-        println!("composition_log_size: {:?}", composition_log_size);
         let random_coeff = channel.draw_secure_felt();
 
         // Read composition polynomial commitment.
@@ -377,9 +376,6 @@ impl CairoFiatShamirHints {
         let mut sample_points = components.mask_points(oods_point);
         // Add the composition polynomial mask points.
         sample_points.push(vec![vec![oods_point]; 2 * SECURE_EXTENSION_DEGREE]);
-
-        println!("trace columns: {}", sample_points[1].len());
-        println!("interaction columns: {}", sample_points[2].len());
 
         channel.mix_felts(&proof.stark_proof.sampled_values.clone().flatten_cols());
         let after_sampled_values_random_coeff = channel.draw_secure_felt();
@@ -423,15 +419,6 @@ impl CairoFiatShamirHints {
         for layer in fri_verifier.inner_layers.iter() {
             fri_alphas.push(layer.folding_alpha);
         }
-
-        println!(
-            "number of inner layers: {:?}",
-            fri_verifier.inner_layers.len()
-        );
-        println!(
-            "number of last layer coefficients: {:?}",
-            fri_verifier.last_layer_poly.coeffs.len()
-        );
 
         // Verify proof of work.
         if !channel.verify_pow_nonce(
@@ -483,26 +470,6 @@ impl CairoFiatShamirHints {
 
         // Get FRI query positions.
         let query_positions_per_log_size = fri_verifier.sample_query_positions(channel);
-        {
-            let column_log_sizes = fri_verifier
-                .first_layer
-                .column_commitment_domains
-                .iter()
-                .map(|domain| domain.log_size())
-                .collect::<BTreeSet<u32>>();
-            let max_column_log_size = *column_log_sizes.iter().max().unwrap();
-            println!("max_column_log_size: {}", max_column_log_size);
-        }
-
-        println!(
-            "channel after getting query positions: {:?}",
-            channel.digest()
-        );
-
-        println!(
-            "query_positions_per_log_size: {:?}",
-            query_positions_per_log_size[&composition_log_size]
-        );
 
         Self {
             initial_channel,
