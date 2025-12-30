@@ -75,11 +75,12 @@ We adapt the Cairo AIR [here](cairo-components/recursive/composition/components)
 We make decommitment oblivious to the log sizes of each component with two designs:
 
 - Merkle tree verification is oblivious to the Merkle tree sizes. This is useful because trace, interaction, and composition trees' heights depend on the log sizes of the components. The Merkle tree verification assumes the maximum size `MAX_SEQUENCE_LOG_SIZE + log_blowup_factor` but can skip bottom layers conditionally according to the computed tree height.
-- Some Merkle tree nodes carry column values at that height, but the heights here depend on the log sizes of the components, and even the number of columns residing at a specific height is not a constant. Several primitives are built [here](cairo-components/recursive/decommitment/src/utils.rs) to apply the column values obliviously, by creating a number of hash accumulators that can be obliviously selected and can correctly batch M31 elements in order in calculating the hash even if those M31 elements come from different components. 
+- Some Merkle tree nodes carry column values at that height, but the heights here depend on the log sizes of the components, and even the number of columns residing at a specific height is not a constant. Several primitives are built [here](cairo-components/recursive/decommitment/src/utils.rs) to apply the column values obliviously, by creating a number of hash accumulators that can be obliviously selected and can correctly batch M31 elements in order in calculating the hash even if those M31 elements come from different components. See [this doc](doc/column_hasher.md) for more detail.
 
 ### Answer
 
 Using the queried values, we can compute the FRI answers on queried points, which are later used to verify the FRI opening. Some components have changing log sizes, and therefore the code computes the FRI answers incrementally and in a way that is oblivious to the log sizes of each component. 
+See [this doc](doc/answer.md) for more detail.
 
 - it uses an oblivious way to get the cached denominator inverses, the shifted OODS point (for interaction), and the domain point's coordinates at a specific log size. 
 - it uses [AnswerAccumulator](cairo-components/recursive/answer/src/data_structures.rs) to incrementally and obliviously update the list of answers of each log size.
@@ -111,6 +112,8 @@ These documentations discuss some new designs in this repository.
 - [Description of ConditionalChannelMixer](doc/conditional_channel_mixer.md)
 - [LogSizeVar and ObliviousMapVar](doc/oblivious_map.md)
 - [Description of seq franking](doc/seq_franking.md)
+- [Description of the oblivious column hasher used in decommitment](doc/column_hasher.md)
+- [Description of the oblivious calculation of FRI answers](doc/answer.md)
 
 [cairo-recursive-verifier]: https://github.com/Ztarknet-recursion/zebra-fork/blob/m-kus/compress-proof/zebra-prove/recursion/src/lib.cairo
 [snos]: https://github.com/keep-starknet-strange/snos
