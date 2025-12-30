@@ -45,7 +45,7 @@ fn main() {
         .join("output_hash.txt");
 
     if std::fs::exists(&output_hash_path).unwrap() {
-        println!("Output hash is cached.");
+        println!("Output hash is cached. Proof is not generated.");
         return;
     }
 

@@ -22,13 +22,15 @@ Special thanks to [Abdel Bakhta](https://x.com/AbdelStark) for scoping out the i
 
 | Proof File | Size | Description |
 |------------|------|-------------|
-| [`recursive_proof.bin.bz`](cairo-components/test_data/recursive_proof.bin.bz) | 1.19 MiB | From [zebra-fork](https://github.com/Ztarknet-recursion/zebra-fork/) and uses Stwo-Cairo to verify a proof from [SNOS][snos]<br>Config: pow_bits = 26, log_last_layer_degree_bound = 0, log_blowup_factor = 1, n_queries = 70 |
-| [`initial_proof.bin`](examples/data/initial_proof.bin) | 612 KiB | Verifies `recursive_proof.bin.bz` using Cairo-to-Plonk verifier<br>Config: pow_bits = 26, log_last_layer_degree_bound = 0, log_blowup_factor = 1, n_queries = 70 |
-| [`level1_20_8_1.bin`](examples/data/level1_20_8_1.bin) | 399 KiB | Verifies `initial_proof.bin` using Plonk-to-Plonk verifier<br>Config: pow_bits = 20, log_last_layer_degree_bound = 8, log_blowup_factor = 1, n_queries = 80 |
-| [`level2_20_8_3.bin`](examples/data/level2_20_8_3.bin) | 191 KiB | Verifies `level1_20_8_1.bin` using Plonk-to-Plonk verifier<br>Config: pow_bits = 20, log_last_layer_degree_bound = 8, log_blowup_factor = 3, n_queries = 27 |
-| [`level3_23_8_7.bin`](examples/data/level3_23_8_7.bin) | 98 KiB | Verifies `level2_20_8_3.bin` using Plonk-to-Plonk verifier<br>Config: pow_bits = 23, log_last_layer_degree_bound = 8, log_blowup_factor = 7, n_queries = 11 |
-| [`level4_20_8_8.bin`](examples/data/level4_20_8_8.bin) | 86 KiB | Verifies `level3_23_8_7.bin` using Plonk-to-Plonk verifier<br>Config: pow_bits = 20, log_last_layer_degree_bound = 8, log_blowup_factor = 8, n_queries = 10 |
-| [`level5_28_7_9.bin`](examples/data/level5_28_7_9.bin) | 77 KiB | Verifies `level4_20_8_8.bin` using Plonk-to-Plonk verifier<br>Config: pow_bits = 28, log_last_layer_degree_bound = 7, log_blowup_factor = 9, n_queries = 8 |
+| [`recursive_proof.bin.bz`](cairo-components/test_data/recursive_proof.bin.bz) | 1.2 MiB | From [zebra-fork](https://github.com/Ztarknet-recursion/zebra-fork/) and uses Stwo-Cairo to verify a proof from [SNOS][snos]<br>Config: pow_bits = 26, log_last_layer_degree_bound = 0, log_blowup_factor = 1, n_queries = 70 |
+| [`initial_proof.bin`](examples/data/initial_proof.bin) | ~604 KiB | Verifies `recursive_proof.bin.bz` using Cairo-to-Plonk verifier<br>Config: pow_bits = 26, log_last_layer_degree_bound = 0, log_blowup_factor = 1, n_queries = 70 |
+| [`level1_20_8_1.bin`](examples/data/level1_20_8_1.bin) | ~411 KiB | Verifies `initial_proof.bin` using Plonk-to-Plonk verifier<br>Config: pow_bits = 20, log_last_layer_degree_bound = 8, log_blowup_factor = 1, n_queries = 80 |
+| [`level2_20_8_3.bin`](examples/data/level2_20_8_3.bin) | ~186 KiB | Verifies `level1_20_8_1.bin` using Plonk-to-Plonk verifier<br>Config: pow_bits = 20, log_last_layer_degree_bound = 8, log_blowup_factor = 3, n_queries = 27 |
+| [`level3_23_8_7.bin`](examples/data/level3_23_8_7.bin) | ~93 KiB | Verifies `level2_20_8_3.bin` using Plonk-to-Plonk verifier<br>Config: pow_bits = 23, log_last_layer_degree_bound = 8, log_blowup_factor = 7, n_queries = 11 |
+| [`level4_20_8_8.bin`](examples/data/level4_20_8_8.bin) | ~86 KiB | Verifies `level3_23_8_7.bin` using Plonk-to-Plonk verifier<br>Config: pow_bits = 20, log_last_layer_degree_bound = 8, log_blowup_factor = 8, n_queries = 10 |
+| [`level5_28_7_9.bin`](examples/data/level5_28_7_9.bin) | ~75 KiB | Verifies `level4_20_8_8.bin` using Plonk-to-Plonk verifier<br>Config: pow_bits = 28, log_last_layer_degree_bound = 7, log_blowup_factor = 9, n_queries = 8 |
+
+Note that generating the proofs again will result in slight variations of the proof sizes. 
 
 ## Assumptions
 
@@ -58,7 +60,7 @@ Compared with a standard Stwo's Fiat-Shamir transform, the one for Cairo has som
 
 To ensure that Fiat-Shamir does not depend on the log sizes of each component, there are a few techniques being used:
 
-- When absorbing the sampled values (around the OODS point), it needs to skip the values for unused "Seq" preprocessed trace columns, which depends on the log sizes of components that use "Seq". To handle this, we use a primitive called [ConditionalChannelMixer](primitives/src/channel.rs) so that the circuit is oblivious to whether a "Seq" preprocessed trace column will be present.
+- When absorbing the sampled values (around the OODS point), it needs to skip the values for unused "Seq" preprocessed trace columns, which depends on the log sizes of components that use "Seq". To handle this, we use a primitive called [ConditionalChannelMixer](primitives/src/channel.rs) so that the circuit is oblivious to whether a "Seq" preprocessed trace column will be present. See [this doc](doc/conditional_channel_mixer.md) for more detail.
 - The number of inner layers in FRI depends on the degree of the FRI polynomial, which has to do with the max log sizes of all the components. To handle this, the Fiat-Shamir assumes `MAX_SEQUENCE_LOG_SIZE - 1` inner layers where some of them are dummy and can be ignored obliviously using the computed actual log size of the FRI polynomial, based on the max log sizes of all components.
 
 ### Composition
@@ -105,6 +107,7 @@ These documentations discuss some new designs in this repository.
 - [List of components in Cairo](doc/components.md)
 - [Cairo proof formality checks](doc/formality_check.md)
 - [Public input in a Cairo proof](doc/public_input.md)
+- [Description of ConditionalChannelMixer](doc/conditional_channel_mixer.md)
 
 [cairo-recursive-verifier]: https://github.com/Ztarknet-recursion/zebra-fork/blob/m-kus/compress-proof/zebra-prove/recursion/src/lib.cairo
 [snos]: https://github.com/keep-starknet-strange/snos

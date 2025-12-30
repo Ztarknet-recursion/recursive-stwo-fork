@@ -1,6 +1,6 @@
 use cairo_air::CairoProof;
 use cairo_plonk_dsl_answer::AnswerResults;
-use cairo_plonk_dsl_composition::CairoFiatCompositionCheck;
+use cairo_plonk_dsl_composition::CairoCompositionCheck;
 use cairo_plonk_dsl_data_structures::CairoProofVar;
 use cairo_plonk_dsl_decommitment::CairoDecommitmentResultsVar;
 use cairo_plonk_dsl_fiat_shamir::CairoFiatShamirResults;
@@ -74,7 +74,7 @@ pub fn verify_proof(proof: &CairoProof<Poseidon31MerkleHasher>, proof_var: &Cair
     let proof_var = CairoProofVar::new_witness(&cs, proof);
     let fiat_shamir_results = CairoFiatShamirResults::compute(&fiat_shamir_hints, &proof_var);
 
-    CairoFiatCompositionCheck::compute(&fiat_shamir_results, &fiat_shamir_hints, &proof_var);
+    CairoCompositionCheck::compute(&fiat_shamir_results, &fiat_shamir_hints, &proof_var);
 
     let answer_hints = AnswerHints::new(&fiat_shamir_hints, proof);
     let decommitment_hints = CairoDecommitmentHints::new(&fiat_shamir_hints, proof);
