@@ -1,8 +1,22 @@
 # Cairo proof formality checks
 
-The `check_claim` function in the Cairo-to-Plonk verifier performs the following formality checks on the Cairo proof claim:
+The `check_claim` function in the Cairo-to-Plonk verifier performs the following formality checks on the Cairo proof claim. 
 
-## Builtin segments
+Note that, however, it does not perform the check that the program must have [certain entries](https://github.com/Ztarknet-recursion/stwo-cairo-fork/blob/main/stwo_cairo_prover/crates/cairo-air/src/verifier.rs#L200) because the program has already been treated as a known, hardcoded, and trusted constant in the circuit.
+
+```rust
+    // First instruction: add_app_immediate (n_builtins).
+    let n_builtins = public_segments.present_segments().len() as u32;
+    assert_eq!(program[0].1, [0x7fff7fff, 0x4078001, 0, 0, 0, 0, 0, 0]); // add_ap_imm.
+    assert_eq!(program[1].1, [n_builtins, 0, 0, 0, 0, 0, 0, 0]); // Imm.
+
+    // Safe call.
+    assert_eq!(program[2].1, [0x80018000, 0x11048001, 0, 0, 0, 0, 0, 0]); // Instruction: call rel ?
+    assert_eq!(program[4].1, [0x7fff7fff, 0x1078001, 0, 0, 0, 0, 0, 0]); // Instruction: jmp rel 0.
+    assert_eq!(program[5].1, [0, 0, 0, 0, 0, 0, 0, 0]); // Imm of last instruction (jmp rel 0).
+```
+
+### Builtin segments
 
 The only optional builtin that we used is range_check_128, and the remaining builtins are not used. Their segments are empty (start_ptr = end_ptr): `pedersen`, `ecdsa`, `bitwise`, `ec_op`, `keccak`, `poseidon`, `range_check_96`, `add_mod`, `mul_mod`.
 

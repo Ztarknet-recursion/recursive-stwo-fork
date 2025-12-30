@@ -54,7 +54,7 @@ Compared with a standard Stwo's Fiat-Shamir transform, the one for Cairo has som
 - It needs to verify that the claim follows [a list of requirements](https://github.com/Ztarknet-recursion/stwo-cairo-fork/blob/main/stwo_cairo_prover/crates/cairo-air/src/verifier.rs#L29) about the Cairo memory spaces and relation uses. See [this doc](doc/formality_check.md) for more detail.
 - The verifier parameters can pre-absorb (hardcode) the program segments for efficiency.
 - It needs to perform an interaction PoW with 24 bits.
-- The public memory sections are treated as public input.
+- The public memory sections are treated as public input. See [this doc](doc/public_input.md) for more detail.
 
 To ensure that Fiat-Shamir does not depend on the log sizes of each component, there are a few techniques being used:
 
@@ -104,6 +104,7 @@ These documentations discuss some new designs in this repository.
 - [Description of the example proof being verified](doc/example_proof.md)
 - [List of components in Cairo](doc/components.md)
 - [Cairo proof formality checks](doc/formality_check.md)
+- [Public input in a Cairo proof](doc/public_input.md)
 
 [cairo-recursive-verifier]: https://github.com/Ztarknet-recursion/zebra-fork/blob/m-kus/compress-proof/zebra-prove/recursion/src/lib.cairo
 [snos]: https://github.com/keep-starknet-strange/snos
