@@ -7,7 +7,10 @@ use circle_plonk_dsl_constraint_system::{var::AllocVar, ConstraintSystemRef};
 use circle_plonk_dsl_primitives::Poseidon2HalfVar;
 use std::io::Write;
 use std::path::PathBuf;
-use stwo::core::{fri::FriConfig, pcs::PcsConfig, vcs::poseidon31_merkle::Poseidon31MerkleChannel};
+use stwo::core::{
+    fields::m31::M31, fri::FriConfig, pcs::PcsConfig,
+    vcs::poseidon31_merkle::Poseidon31MerkleChannel,
+};
 use stwo_examples::plonk_with_poseidon::air::{
     prove_plonk_with_poseidon, verify_plonk_with_poseidon,
 };
@@ -71,6 +74,19 @@ fn main() {
 
     let (plonk, mut poseidon) = cs.generate_plonk_with_poseidon_circuit();
     let proof = prove_plonk_with_poseidon::<Poseidon31MerkleChannel>(config, &plonk, &mut poseidon);
+    assert_eq!(
+        proof.stark_proof.commitments[0].0,
+        [
+            M31::from(1700934344),
+            M31::from(1243211772),
+            M31::from(165254824),
+            M31::from(941355991),
+            M31::from(5055852),
+            M31::from(364491116),
+            M31::from(77117614),
+            M31::from(1214499037)
+        ]
+    );
 
     let encoded = bincode::serialize(&proof).unwrap();
     let mut fs = std::fs::File::create(initial_proof_path).unwrap();

@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use indexmap::IndexMap;
 use std::ops::Neg;
 
 use cairo_air::verifier::INTERACTION_POW_BITS;
@@ -12,7 +12,6 @@ use circle_plonk_dsl_primitives::{
     channel::ConditionalChannelMixer, option::OptionVar, BitIntVar, BitVar, BitsVar, ChannelVar,
     CirclePointQM31Var, M31Var, Poseidon2HalfVar, QM31Var,
 };
-use indexmap::IndexMap;
 use stwo::core::{fields::m31::M31, vcs::poseidon31_hash::Poseidon31Hash};
 use stwo_cairo_common::{
     memory::LARGE_MEMORY_VALUE_ID_BASE,
@@ -258,7 +257,7 @@ impl CairoFiatShamirResults {
             .equalverify(&BitVar::new_false(&initial_ap_bits.cs()));
 
         // check that the relation uses do not overflow PRIME
-        let mut relation_uses: HashMap<&str, M31Var> = HashMap::<&'static str, M31Var>::new();
+        let mut relation_uses: IndexMap<&str, M31Var> = IndexMap::<&'static str, M31Var>::new();
         claim.accumulate_relation_uses(&mut relation_uses);
 
         // check that the largest id does not overflow PRIME

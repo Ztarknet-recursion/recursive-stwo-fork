@@ -11,31 +11,26 @@ use circle_plonk_dsl_hints::{
 use circle_plonk_dsl_primitives::QM31Var;
 use circle_plonk_dsl_primitives::{CirclePointQM31Var, Poseidon2HalfVar};
 use num_traits::One;
-use serde::Serialize;
 use std::io::Write;
 use std::path::{Path, PathBuf};
-use stwo::core::channel::MerkleChannel;
+use stwo::core::fields::m31::M31;
 use stwo::core::fields::qm31::QM31;
 use stwo::core::fri::FriConfig;
 use stwo::core::pcs::PcsConfig;
 use stwo::core::vcs::poseidon31_hash::Poseidon31Hash;
 use stwo::core::vcs::poseidon31_merkle::{Poseidon31MerkleChannel, Poseidon31MerkleHasher};
-use stwo::prover::backend::simd::SimdBackend;
-use stwo::prover::backend::BackendForChannel;
 use stwo_examples::plonk_with_poseidon::air::{
     prove_plonk_with_poseidon_unchecked, verify_plonk_with_poseidon, PlonkWithPoseidonProof,
 };
 
-pub fn demo_recurse<C: MerkleChannel>(
+pub fn demo_recurse(
     src: &Path,
     src_config: PcsConfig,
     dest: &Path,
     dest_config: PcsConfig,
     output_hash: Poseidon31Hash,
-) where
-    SimdBackend: BackendForChannel<C>,
-    C::H: Serialize,
-{
+    expected_preprocessed_column_hash: Poseidon31Hash,
+) {
     println!(
         "Generating a proof at {} that verifies {}",
         dest.display(),
@@ -184,14 +179,26 @@ pub fn demo_recurse<C: MerkleChannel>(
     }
 
     let timer = std::time::Instant::now();
-    let proof = prove_plonk_with_poseidon_unchecked::<C>(dest_config, &plonk, &mut poseidon);
+    let proof = prove_plonk_with_poseidon_unchecked::<Poseidon31MerkleChannel>(
+        dest_config,
+        &plonk,
+        &mut poseidon,
+    );
     println!("proof generation time: {}s", timer.elapsed().as_secs_f64());
+    println!(
+        "proof preprocessed column hash: {}",
+        proof.stark_proof.commitments[0]
+    );
+    assert_eq!(
+        proof.stark_proof.commitments[0].0,
+        expected_preprocessed_column_hash.0
+    );
 
     let encoded = bincode::serialize(&proof).unwrap();
     let mut fs = std::fs::File::create(dest_path).unwrap();
     fs.write_all(&encoded).unwrap();
 
-    verify_plonk_with_poseidon::<C>(proof, dest_config, &inputs).unwrap();
+    verify_plonk_with_poseidon::<Poseidon31MerkleChannel>(proof, dest_config, &inputs).unwrap();
 }
 
 fn main() {
@@ -230,39 +237,89 @@ fn main() {
         serde_json::from_str::<Poseidon31Hash>(&std::fs::read_to_string(output_hash_path).unwrap())
             .unwrap();
 
-    demo_recurse::<Poseidon31MerkleChannel>(
+    demo_recurse(
         Path::new("initial_proof.bin"),
         initial_config,
         Path::new("level1_20_8_1.bin"),
         fast_prover_config,
         output_hash,
+        Poseidon31Hash([
+            M31::from(1574321771),
+            M31::from(1222278315),
+            M31::from(2020663978),
+            M31::from(1849712788),
+            M31::from(846164136),
+            M31::from(884375765),
+            M31::from(1778566662),
+            M31::from(1715187537),
+        ]),
     );
-    demo_recurse::<Poseidon31MerkleChannel>(
+    demo_recurse(
         Path::new("level1_20_8_1.bin"),
         fast_prover_config,
         Path::new("level2_20_8_3.bin"),
         fast_prover2_config,
         output_hash,
+        Poseidon31Hash([
+            M31::from(1303974476),
+            M31::from(717036650),
+            M31::from(223636916),
+            M31::from(761758110),
+            M31::from(1808101821),
+            M31::from(1330837278),
+            M31::from(680551515),
+            M31::from(1312816051),
+        ]),
     );
-    demo_recurse::<Poseidon31MerkleChannel>(
+    demo_recurse(
         Path::new("level2_20_8_3.bin"),
         fast_prover2_config,
         Path::new("level3_23_8_7.bin"),
         fast_verifier_config,
         output_hash,
+        Poseidon31Hash([
+            M31::from(1553541233),
+            M31::from(12511369),
+            M31::from(364495329),
+            M31::from(1388203115),
+            M31::from(808332923),
+            M31::from(1853131963),
+            M31::from(881728687),
+            M31::from(807959462),
+        ]),
     );
-    demo_recurse::<Poseidon31MerkleChannel>(
+    demo_recurse(
         Path::new("level3_23_8_7.bin"),
         fast_verifier_config,
         Path::new("level4_20_8_8.bin"),
         fast_verifier2_config,
         output_hash,
+        Poseidon31Hash([
+            M31::from(916390933),
+            M31::from(1803815574),
+            M31::from(1415653565),
+            M31::from(1258578054),
+            M31::from(1936193346),
+            M31::from(211236845),
+            M31::from(962332438),
+            M31::from(1634103599),
+        ]),
     );
-    demo_recurse::<Poseidon31MerkleChannel>(
+    demo_recurse(
         Path::new("level4_20_8_8.bin"),
         fast_verifier2_config,
         Path::new("level5_28_7_9.bin"),
         fast_verifier3_config,
         output_hash,
+        Poseidon31Hash([
+            M31::from(56138091),
+            M31::from(1318714339),
+            M31::from(1275847031),
+            M31::from(529351955),
+            M31::from(1350905478),
+            M31::from(1252241817),
+            M31::from(1179195463),
+            M31::from(1040490758),
+        ]),
     );
 }

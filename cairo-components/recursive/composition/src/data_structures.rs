@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::ops::Mul;
 use std::ops::Neg;
 use std::sync::OnceLock;
@@ -11,6 +11,7 @@ use circle_plonk_dsl_primitives::channel::PreProcessedTracePresent;
 use circle_plonk_dsl_primitives::fields::WrappedQM31Var;
 use circle_plonk_dsl_primitives::oblivious_map::SelectVar;
 use circle_plonk_dsl_primitives::{BitVar, LogSizeVar, QM31Var};
+use indexmap::IndexMap;
 use num_traits::Zero;
 use stwo::core::fields::qm31::{QM31, SECURE_EXTENSION_DEGREE};
 use stwo::core::pcs::TreeVec;
@@ -24,10 +25,10 @@ use stwo_constraint_framework::{
     EvalAtRow, Relation, RelationEntry, INTERACTION_TRACE_IDX, PREPROCESSED_TRACE_IDX,
 };
 
-pub static SEQ_PREPROCESSED_TRACE_MAP: OnceLock<HashMap<PreProcessedColumnId, usize>> =
+pub static SEQ_PREPROCESSED_TRACE_MAP: OnceLock<IndexMap<PreProcessedColumnId, usize>> =
     OnceLock::new();
 
-fn initialize_seq_preprocessed_trace_map() -> HashMap<PreProcessedColumnId, usize> {
+fn initialize_seq_preprocessed_trace_map() -> IndexMap<PreProcessedColumnId, usize> {
     let ids = PreProcessedTraceVariant::CanonicalWithoutPedersen
         .to_preprocessed_trace()
         .ids();
@@ -243,7 +244,7 @@ impl EvalAtRow for PointEvaluatorVar<'_> {
 
         let last_batch = *batching.iter().max().unwrap();
 
-        let mut fracs_by_batch = HashMap::<usize, Vec<Fraction<Self::EF, Self::EF>>>::new();
+        let mut fracs_by_batch = IndexMap::<usize, Vec<Fraction<Self::EF, Self::EF>>>::new();
 
         for (batch, frac) in batching.iter().zip(self.logup.fracs.iter()) {
             fracs_by_batch

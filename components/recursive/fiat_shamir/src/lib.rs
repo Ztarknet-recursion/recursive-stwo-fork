@@ -186,6 +186,7 @@ mod test {
     use circle_plonk_dsl_hints::FiatShamirHints;
     use circle_plonk_dsl_primitives::QM31Var;
     use num_traits::One;
+    use stwo::core::fields::m31::M31;
     use stwo::core::fields::qm31::QM31;
     use stwo::core::fri::FriConfig;
     use stwo::core::pcs::PcsConfig;
@@ -223,6 +224,20 @@ mod test {
         let (plonk, mut poseidon) = cs.generate_plonk_with_poseidon_circuit();
         let proof =
             prove_plonk_with_poseidon::<Poseidon31MerkleChannel>(config, &plonk, &mut poseidon);
+        assert_eq!(
+            proof.stark_proof.commitments[0].0,
+            [
+                M31::from(490803574),
+                M31::from(1018072709),
+                M31::from(1278677372),
+                M31::from(47473464),
+                M31::from(1272504321),
+                M31::from(1447036293),
+                M31::from(582747704),
+                M31::from(37247133)
+            ]
+        );
+
         verify_plonk_with_poseidon::<Poseidon31MerkleChannel>(
             proof,
             config,

@@ -8,6 +8,7 @@ Special thanks to [Abdel Bakhta](https://x.com/AbdelStark) for scoping out the i
 
 **Contents**
 - [Proof Sizes](#proof-sizes)
+- [How to Reproduce](#how-to-reproduce)
 - [Assumptions](#assumptions)
 - [Constructions](#constructions)
   - [Fiat-Shamir](#fiat-shamir)
@@ -31,6 +32,26 @@ Special thanks to [Abdel Bakhta](https://x.com/AbdelStark) for scoping out the i
 | [`level5_28_7_9.bin`](examples/data/level5_28_7_9.bin) | ~75 KiB | Verifies `level4_20_8_8.bin` using Plonk-to-Plonk verifier<br>Config: pow_bits = 28, log_last_layer_degree_bound = 7, log_blowup_factor = 9, n_queries = 8 |
 
 Note that generating the proofs again will result in slight variations of the proof sizes. 
+
+## How to Reproduce
+
+To reproduce the proof generation process:
+
+1. **Place the Cairo proof**: Put the Cairo proof in binary format that needs to be recursively verified in `cairo-components/test_data/recursive_proof.bin.bz`
+
+2. **Clean existing proofs**: Delete any files in `examples/data`
+
+3. **Generate initial proof**: Navigate to `examples/reduction` and run:
+   ```bash
+   cargo run
+   ```
+   This will emit `initial_proof.bin` and `output_hash.txt` in `examples/data`
+
+4. **Generate compressed proofs**: Navigate to `examples/multi-proofs` and run:
+   ```bash
+   cargo run
+   ```
+   This will emit `level1_20_8_1.bin` through `level5_28_7_9.bin` proof binary files in `examples/data`. It would also output the hash of the preprocessed trace hash, which should be a verifier parameter.
 
 ## Assumptions
 

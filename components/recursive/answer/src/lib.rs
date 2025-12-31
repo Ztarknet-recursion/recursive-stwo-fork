@@ -10,9 +10,10 @@ use circle_plonk_dsl_hints::{AnswerHints, DecommitHints, FiatShamirHints};
 use circle_plonk_dsl_primitives::{CirclePointM31Var, CirclePointQM31Var};
 use circle_plonk_dsl_primitives::{M31Var, QM31Var};
 use circle_plonk_dsl_primitives::{PointCarryingQueryVar, QueryPositionsPerLogSizeVar};
+use indexmap::IndexMap;
 use itertools::{izip, multiunzip, Itertools};
 use std::cmp::Reverse;
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet};
 use std::iter::zip;
 use std::ops::Add;
 use stwo::core::pcs::{PcsConfig, TreeVec};
@@ -42,8 +43,8 @@ impl AnswerResults {
     ) -> AnswerResults {
         let cs = oods_point.cs();
 
-        let mut all_shifts_plonk = HashSet::new();
-        let mut all_shifts_poseidon = HashSet::new();
+        let mut all_shifts_plonk = BTreeSet::new();
+        let mut all_shifts_poseidon = BTreeSet::new();
         for round in fiat_shamir_hints.mask_plonk.iter() {
             for column in round.iter() {
                 for &shift in column.iter() {
@@ -62,8 +63,8 @@ impl AnswerResults {
         let trace_step_plonk = CanonicCoset::new(fiat_shamir_hints.log_size_plonk).step();
         let trace_step_poseidon = CanonicCoset::new(fiat_shamir_hints.log_size_poseidon).step();
 
-        let mut shifted_points_plonk = HashMap::<isize, CirclePointQM31Var>::new();
-        let mut shifted_points_poseidon = HashMap::<isize, CirclePointQM31Var>::new();
+        let mut shifted_points_plonk = IndexMap::<isize, CirclePointQM31Var>::new();
+        let mut shifted_points_poseidon = IndexMap::<isize, CirclePointQM31Var>::new();
         for &i in all_shifts_plonk.iter() {
             shifted_points_plonk.insert(i, oods_point.add(&trace_step_plonk.mul_signed(i)));
         }
@@ -393,6 +394,7 @@ mod test {
     use circle_plonk_dsl_primitives::CirclePointQM31Var;
     use circle_plonk_dsl_primitives::QM31Var;
     use num_traits::One;
+    use stwo::core::fields::m31::M31;
     use stwo::core::fields::qm31::QM31;
     use stwo::core::fri::FriConfig;
     use stwo::core::pcs::PcsConfig;
@@ -442,6 +444,19 @@ mod test {
         let (plonk, mut poseidon) = cs.generate_plonk_with_poseidon_circuit();
         let proof =
             prove_plonk_with_poseidon::<Poseidon31MerkleChannel>(config, &plonk, &mut poseidon);
+        assert_eq!(
+            proof.stark_proof.commitments[0].0,
+            [
+                M31::from(1256583800),
+                M31::from(1744140694),
+                M31::from(302666563),
+                M31::from(849249335),
+                M31::from(522978606),
+                M31::from(818568311),
+                M31::from(340169983),
+                M31::from(993984006)
+            ]
+        );
         verify_plonk_with_poseidon::<Poseidon31MerkleChannel>(
             proof,
             config,

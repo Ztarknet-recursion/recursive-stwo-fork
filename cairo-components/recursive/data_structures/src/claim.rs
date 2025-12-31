@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use cairo_air::{
     air::CairoClaim, blake::air::BlakeContextClaim, builtins_air::BuiltinsClaim,
     components::memory_id_to_big, opcodes_air::OpcodeClaim,
@@ -9,6 +7,7 @@ use circle_plonk_dsl_constraint_system::{
     ConstraintSystemRef,
 };
 use circle_plonk_dsl_primitives::{ChannelVar, LogSizeVar, M31Var, QM31Var};
+use indexmap::IndexMap;
 use stwo::core::fields::m31::M31;
 
 use crate::{public_data::PublicDataVar, BitIntVar};
@@ -138,7 +137,7 @@ impl OpcodeClaimVar {
         self.ret.mix_into(channel);
     }
 
-    pub fn accumulate_relation_uses(&self, relation_uses: &mut HashMap<&str, M31Var>) {
+    pub fn accumulate_relation_uses(&self, relation_uses: &mut IndexMap<&str, M31Var>) {
         accumulate_component!(add_opcode, self.add, relation_uses);
         accumulate_component!(add_opcode_small, self.add_small, relation_uses);
         accumulate_component!(add_ap_opcode, self.add_ap, relation_uses);
@@ -222,7 +221,7 @@ impl BlakeContextClaimVar {
         self.triple_xor_32.mix_into(channel);
     }
 
-    pub fn accumulate_relation_uses(&self, relation_uses: &mut HashMap<&str, M31Var>) {
+    pub fn accumulate_relation_uses(&self, relation_uses: &mut IndexMap<&str, M31Var>) {
         accumulate_component!(blake_round, self.blake_round, relation_uses);
         accumulate_component!(blake_g, self.blake_g, relation_uses);
         accumulate_component!(triple_xor_32, self.triple_xor_32, relation_uses);
@@ -380,7 +379,7 @@ impl CairoClaimVar {
         self.memory_id_to_value.mix_into(channel);
     }
 
-    pub fn accumulate_relation_uses(&self, relation_uses: &mut HashMap<&str, M31Var>) {
+    pub fn accumulate_relation_uses(&self, relation_uses: &mut IndexMap<&str, M31Var>) {
         self.opcode_claim.accumulate_relation_uses(relation_uses);
         accumulate_component!(
             range_check_builtin_bits_128,
